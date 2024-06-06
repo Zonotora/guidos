@@ -1,33 +1,24 @@
 [org 0x7c00]
 main:
-    mov bp, 0x8000 ; set the stack safely away from us
+    mov bp, 0x9000 ; set the stack
     mov sp, bp
 
-    mov bx, 0x9000 ; es:bx = 0x0000:0x9000 = 0x09000
-    mov dh, 2 ; read 2 sectors
-    ; the bios sets 'dl' for our boot disk number
-    ; if you have trouble, use the '-fda' flag: 'qemu -fda file.bin'
-    call disk_load
+    mov bx, MSG_REAL_MODE
+    call print ; Written using the BIOS
 
-    mov dx, [0x9000] ; retrieve the first loaded word, 0xdada
-    call print_hex
-
-    call print_nl
-
-    mov dx, [0x9000 + 512] ; first word from second loaded sector, 0xface
-    call print_hex
-
-    jmp $
+    call switch_to_pm
+    jmp $ ; this will never be executed
 
 %include "print/boot_print.asm"
-%include "print/boot_print_hex.asm"
-%include "boot_disk.asm"
+%include "32bit/gdt.asm"
+%include "32bit/print.asm"
+%include "32bit/switch.asm"
+
+
+MSG_REAL_MODE db "Started in 16-bit real mode", 0
+MSG_PROT_MODE db "Loaded 32-bit protected mode", 0
+
 
 ; Magic number
 times 510 - ($-$$) db 0
 dw 0xaa55
-
-; boot sector = sector 1 of cyl 0 of head 0 of hdd 0
-; from now on = sector 2 ...
-times 256 dw 0xdada ; sector 2 = 512 bytes
-times 256 dw 0xface ; sector 3 = 512 bytes
