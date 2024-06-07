@@ -2,24 +2,24 @@
 #include "screen.h"
 #include "../kernel/utils.h"
 
-char *const VGA = (char *const) VIDEO_ADDRESS;
+s8 *const VGA = (s8 *const) VIDEO_ADDRESS;
 
 // Local functions
-unsigned short get_offset(unsigned char row, unsigned char col) {
-    unsigned short offset = (MAX_COLS * row) + col;
+u16 get_offset(u8 row, u8 col) {
+    u16 offset = (MAX_COLS * row) + col;
     return offset;
 }
 
-void set_cursor(unsigned char row, unsigned char col) {
-    unsigned short offset = get_offset(row, col);
+void set_cursor(u8 row, u8 col) {
+    u16 offset = get_offset(row, col);
     port_byte_out(REG_SCREEN_CTRL, VGA_OFFSET_HIGH);
     port_byte_out(REG_SCREEN_DATA, offset >> 8);
     port_byte_out(REG_SCREEN_CTRL, VGA_OFFSET_LOW);
     port_byte_out(REG_SCREEN_DATA, offset & 0xFF);
 }
 
-unsigned short get_cursor() {
-    unsigned short offset = 0;
+u16 get_cursor() {
+    u16 offset = 0;
     port_byte_out(REG_SCREEN_CTRL, VGA_OFFSET_HIGH);
     offset += port_byte_in(REG_SCREEN_DATA) << 8;
     port_byte_out(REG_SCREEN_CTRL, VGA_OFFSET_LOW);
@@ -27,22 +27,22 @@ unsigned short get_cursor() {
     return offset;
 }
 
-unsigned short scroll() {
-    int n_bytes = 2 * (MAX_CHARACTERS - MAX_COLS);
+u16 scroll() {
+    s32 n_bytes = 2 * (MAX_CHARACTERS - MAX_COLS);
     memory_copy(&VGA[2*MAX_COLS], &VGA[0], n_bytes);
-    char buf[MAX_COLS + 1];
-    for (int i = 0; i < MAX_COLS; i++) {
+    s8 buf[MAX_COLS + 1];
+    for (s32 i = 0; i < MAX_COLS; i++) {
         buf[i] = ' ';
     }
     buf[MAX_COLS] = 0;
-    int row = MAX_ROWS - 1;
-    int col = 0;
-    unsigned short offset = get_offset(row, col);
-    kprint_at(&buf, row, col);
+    s32 row = MAX_ROWS - 1;
+    s32 col = 0;
+    u16 offset = get_offset(row, col);
+    kprint_at((s8 *)&buf, row, col);
     return offset;
 }
 
-unsigned short write_vga(unsigned char c, unsigned char modifier, unsigned short offset) {
+u16 write_vga(u8 c, u8 modifier, u16 offset) {
     if (offset >= MAX_CHARACTERS) {
         offset = scroll();
     }
@@ -53,23 +53,25 @@ unsigned short write_vga(unsigned char c, unsigned char modifier, unsigned short
 
 // Global functions
 void clear_screen() {
-    for (int i = 0; i < MAX_CHARACTERS; i++) {
+    for (s32 i = 0; i < MAX_CHARACTERS; i++) {
         write_vga(0, 0, i);
     }
+    set_cursor(0, 0);
 }
 
-void kprint_at(char *message, unsigned char row, unsigned char col) {
-    char *s = message;
+void kprint_at(s8 *message, u8 row, u8 col) {
+    s8 *s = message;
     while(*s != 0) {
 
         if (*s == '\n') {
             row += 1;
             col = 0;
+            set_cursor(row, col);
             s += 1;
             continue;
         }
 
-        unsigned short offset = get_offset(row, col);
+        u16 offset = get_offset(row, col);
         offset = write_vga(*s, WHITE_ON_BLACK, offset);
         s += 1;
         offset += 1;
@@ -80,8 +82,8 @@ void kprint_at(char *message, unsigned char row, unsigned char col) {
 }
 
 void kprint(char *message) {
-    unsigned short offset = get_cursor();
-    unsigned char row = offset / MAX_COLS;
-    unsigned char col = offset % MAX_COLS;
+    u16 offset = get_cursor();
+    u8 row = offset / MAX_COLS;
+    u8 col = offset % MAX_COLS;
     kprint_at(message, row, col);
 }
