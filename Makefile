@@ -1,15 +1,39 @@
-build:
-	nasm -f bin boot.asm -o boot.bin
-	clang -m32 -target -i386-none-eabi -ffreestanding -c kernel.c -o kernel.o
-	nasm kernel_entry.asm -f elf -o kernel_entry.o
-	i386-elf-ld -o kernel.bin -Ttext 0x1000 kernel_entry.o kernel.o --oformat binary
-	cat boot.bin kernel.bin > image.bin
+C_SOURCES = $(wildcard kernel/*.c drivers/*.c)
+HEADERS = $(wildcard kernel/*.h drivers/*.h)
+BIN = $(wildcard *.bin)
+OBJ = ${C_SOURCES:.c=.o}
 
-debug: build
-	qemu-system-i386 -drive file=image.bin,format=raw -S -s
+CLANG = clang -m32 -target -i386-none-eabi
+CFLAGS = -g
 
-i386: build
+image.bin: boot/boot.bin kernel.bin
+	cat $^ > image.bin
+
+kernel.bin: boot/kernel_entry.o ${OBJ}
+	i386-elf-ld -o $@ -Ttext 0x1000 $^ --oformat binary
+
+kernel.elf: boot/kernel_entry.o ${OBJ}
+	i386-elf-ld -o $@ -Ttext 0x1000 $^
+
+debug: image.bin kernel.elf
+	qemu-system-i386 -fda image.bin -S -s &
+	gdb -ex "target remote localhost:1234" -ex "symbol-file kernel.elf"
+
+i386-hdd: image.bin
 	qemu-system-i386 -drive file=image.bin,format=raw
 
-floppy: build
+i386-floppy: image.bin
 	qemu-system-i386 -fda image.bin
+
+%.o: %.c ${HEADERS}
+	${CLANG} ${CFLAGS} -ffreestanding -c $< -o $@
+
+%.o: %.asm
+	nasm $< -f elf -o $@
+
+%.bin: %.asm
+	nasm $< -f bin -o $@
+
+clean:
+	rm -rf ${OBJ}
+	rm -rf ${BIN}
