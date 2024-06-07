@@ -6,7 +6,10 @@ build:
 	cat boot.bin kernel.bin > image.bin
 
 debug: build
-	qemu-system-i386 -drive file=boot.bin,format=raw -S -s
+	qemu-system-i386 -drive file=image.bin,format=raw -S -s
 
 i386: build
-	qemu-system-i386 -drive file=boot.bin,format=raw
+	qemu-system-i386 -drive file=image.bin,format=raw
+
+floppy: build
+	qemu-system-i386 -fda image.bin
