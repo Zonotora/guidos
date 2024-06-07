@@ -1,5 +1,6 @@
 #include "ports.h"
 #include "screen.h"
+#include "../kernel/utils.h"
 
 char *const VGA = (char *const) VIDEO_ADDRESS;
 
@@ -26,12 +27,28 @@ unsigned short get_cursor() {
     return offset;
 }
 
-void write_vga(unsigned char c, unsigned char modifier, unsigned short offset) {
+unsigned short scroll() {
+    int n_bytes = 2 * (MAX_CHARACTERS - MAX_COLS);
+    memory_copy(&VGA[2*MAX_COLS], &VGA[0], n_bytes);
+    char buf[MAX_COLS + 1];
+    for (int i = 0; i < MAX_COLS; i++) {
+        buf[i] = ' ';
+    }
+    buf[MAX_COLS] = 0;
+    int row = MAX_ROWS - 1;
+    int col = 0;
+    unsigned short offset = get_offset(row, col);
+    kprint_at(&buf, row, col);
+    return offset;
+}
+
+unsigned short write_vga(unsigned char c, unsigned char modifier, unsigned short offset) {
     if (offset >= MAX_CHARACTERS) {
-        return;
+        offset = scroll();
     }
     VGA[offset*2] = c;
     VGA[offset*2+1] = modifier;
+    return offset;
 }
 
 // Global functions
@@ -41,7 +58,7 @@ void clear_screen() {
     }
 }
 
-void kprint_at(char *message, int row, int col) {
+void kprint_at(char *message, unsigned char row, unsigned char col) {
     char *s = message;
     while(*s != 0) {
 
@@ -53,7 +70,7 @@ void kprint_at(char *message, int row, int col) {
         }
 
         unsigned short offset = get_offset(row, col);
-        write_vga(*s, WHITE_ON_BLACK, offset);
+        offset = write_vga(*s, WHITE_ON_BLACK, offset);
         s += 1;
         offset += 1;
         row = offset / MAX_COLS;
