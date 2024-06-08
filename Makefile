@@ -17,7 +17,9 @@ kernel.elf: boot/kernel_entry.o ${OBJ}
 
 debug: image.bin kernel.elf
 	qemu-system-i386 -fda image.bin -S -s &
-	gdb -ex "target remote localhost:1234" -ex "symbol-file kernel.elf"
+	gdb -ex "target remote localhost:1234" \
+			-ex "symbol-file kernel.elf" \
+			-ex "tui layout src" \
 
 i386-hdd: image.bin
 	qemu-system-i386 -drive file=image.bin,format=raw
