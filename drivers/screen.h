@@ -21,5 +21,6 @@
 void clear_screen();
 void kprint_at(s8 *message, u8 col, u8 row);
 void kprint(s8 *message);
+void backspace();
 
 #endif

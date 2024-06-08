@@ -4,10 +4,10 @@
 #include "../drivers/screen.h"
 
 void main() {
-    clear_screen();
     isr_install();
-
     asm volatile("sti");
     init_keyboard();
+
+    clear_screen();
 }
 

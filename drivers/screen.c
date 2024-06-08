@@ -88,3 +88,14 @@ void kprint(char *message) {
     u8 col = offset % MAX_COLS;
     kprint_at(message, row, col);
 }
+
+void backspace() {
+    s32 offset = get_cursor() - 1;
+    if (offset < 0) {
+        offset = 0;
+    }
+    u8 row = offset / MAX_COLS;
+    u8 col = offset % MAX_COLS;
+    kprint_at(" ", row, col);
+    set_cursor(row, col);
+}

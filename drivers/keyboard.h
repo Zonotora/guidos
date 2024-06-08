@@ -4,6 +4,8 @@
 #include "../cpu/types.h"
 
 void init_keyboard();
-void print_letter(u8 scancode);
+
+#define BACKSPACE 0x0E
+#define ENTER 0x1C
 
 #endif
