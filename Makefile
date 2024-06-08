@@ -1,5 +1,5 @@
-C_SOURCES = $(wildcard kernel/*.c drivers/*.c cpu/*.c)
-HEADERS = $(wildcard kernel/*.h drivers/*.h cpu/*.h)
+C_SOURCES = $(wildcard kernel/*.c drivers/*.c cpu/*.c libc/*.c)
+HEADERS = $(wildcard kernel/*.h drivers/*.h cpu/*.h libc/*.h)
 BIN = $(wildcard *.bin)
 OBJ = ${C_SOURCES:.c=.o cpu/interrupt.o}
 
@@ -37,5 +37,4 @@ i386-floppy: image.bin
 	nasm $< -f bin -o $@
 
 clean:
-	rm -rf ${OBJ}
-	rm -rf ${BIN}
+	find . -name '*.o' | xargs rm -f

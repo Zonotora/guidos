@@ -1,6 +1,7 @@
-#include "ports.h"
+#include "../cpu/ports.h"
+#include "../libc/mem.h"
+#include "../libc/string.h"
 #include "screen.h"
-#include "../kernel/utils.h"
 
 s8 *const VGA = (s8 *const) VIDEO_ADDRESS;
 
