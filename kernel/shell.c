@@ -16,13 +16,13 @@ static void parse_cmd() {
     }
 }
 
-void prompt(u8 scancode, char ascii) {
+void prompt(unsigned char scancode, char ascii) {
     if (scancode == BACKSPACE) {
         backspace();
     } else if (scancode == ENTER) {
         kprint("\n");
         parse_cmd();
-        memory_set(cmd, 0, BUFFER_LEN);
+        memory_set((unsigned char *)cmd, 0, BUFFER_LEN);
         kprint("> ");
     } else {
         char buf[2] = { ascii, 0 };

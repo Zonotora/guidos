@@ -1,18 +1,18 @@
-C_SOURCES = $(wildcard kernel/*.c drivers/*.c cpu/*.c libc/*.c)
-HEADERS = $(wildcard kernel/*.h drivers/*.h cpu/*.h libc/*.h)
+C_SOURCES = $(wildcard kernel/*.c drivers/*.c arch/**/*.c libc/*.c)
+HEADERS = $(wildcard kernel/*.h drivers/*.h arch/**/*.h libc/*.h)
 BIN = $(wildcard *.bin)
-OBJ = ${C_SOURCES:.c=.o cpu/interrupt.o}
+OBJ = ${C_SOURCES:.c=.o arch/x86/interrupt.o}
 
 CLANG = clang -m32 -target -i386-none-eabi
 CFLAGS = -g
 
-image.bin: boot/boot.bin kernel.bin
+image.bin: arch/x86/boot/boot.bin kernel.bin
 	cat $^ > image.bin
 
-kernel.bin: boot/kernel_entry.o ${OBJ}
+kernel.bin: arch/x86/boot/kernel_entry.o ${OBJ}
 	i386-elf-ld -o $@ -Ttext 0x1000 $^ --oformat binary
 
-kernel.elf: boot/kernel_entry.o ${OBJ}
+kernel.elf: arch/x86/boot/kernel_entry.o ${OBJ}
 	i386-elf-ld -o $@ -Ttext 0x1000 $^
 
 debug: image.bin kernel.elf
@@ -28,7 +28,7 @@ i386-floppy: image.bin
 	qemu-system-i386 -fda image.bin
 
 %.o: %.c ${HEADERS}
-	${CLANG} ${CFLAGS} -ffreestanding -c $< -o $@
+	${CLANG} ${CFLAGS} -I. -ffreestanding -c $< -o $@
 
 %.o: %.asm
 	nasm $< -f elf -o $@

@@ -1,8 +1,6 @@
 #ifndef SHELL_H
 #define SHELL_H
 
-#include "../cpu/types.h"
-
-void prompt(u8 scancode, char ascii);
+void prompt(unsigned char scancode, char ascii);
 
 #endif

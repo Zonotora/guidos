@@ -1,7 +1,7 @@
-#include "../cpu/isr.h"
-#include "../cpu/ports.h"
-#include "../libc/string.h"
-#include "../kernel/shell.h"
+#include "arch/x86/isr.h"
+#include "arch/x86/ports.h"
+#include "libc/string.h"
+#include "kernel/shell.h"
 #include "keyboard.h"
 
 #define SC_MAX 57
@@ -19,7 +19,7 @@ const char sc_ascii[] = { '?', '?', '1', '2', '3', '4', '5', '6',
 
 static void keyboard_callback(registers_t *regs) {
     /* The PIC leaves us the scancode in port 0x60 */
-    u8 scancode = port_byte_in(0x60);
+    unsigned char scancode = port_byte_in(0x60);
     if (scancode > SC_MAX) return;
     prompt(scancode, sc_ascii[scancode]);
 }

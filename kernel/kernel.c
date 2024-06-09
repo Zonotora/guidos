@@ -1,7 +1,7 @@
-#include "../cpu/isr.h"
-#include "../cpu/timer.h"
-#include "../drivers/keyboard.h"
-#include "../drivers/screen.h"
+#include "arch/x86/isr.h"
+#include "arch/x86/timer.h"
+#include "drivers/keyboard.h"
+#include "drivers/screen.h"
 
 void main() {
     isr_install();

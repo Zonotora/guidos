@@ -1,23 +1,23 @@
-#include "../drivers/screen.h"
-#include "../libc/string.h"
+#include "drivers/screen.h"
+#include "libc/string.h"
 #include "timer.h"
 #include "ports.h"
 #include "isr.h"
 
-u32 tick = 0;
+unsigned int tick = 0;
 
 static void timer_callback(registers_t *regs) {
     tick++;
 }
 
-void init_timer(u32 freq) {
+void init_timer(unsigned int freq) {
     /* Install the function we just wrote */
     register_interrupt_handler(IRQ0, timer_callback);
 
     /* Get the PIT value: hardware clock at 1193180 Hz */
-    u32 divisor = 1193180 / freq;
-    u8 low  = (u8)(divisor & 0xFF);
-    u8 high = (u8)( (divisor >> 8) & 0xFF);
+    unsigned int divisor = 1193180 / freq;
+    unsigned char low  = (unsigned char)(divisor & 0xFF);
+    unsigned char high = (unsigned char)( (divisor >> 8) & 0xFF);
     /* Send the command */
     port_byte_out(0x43, 0x36); /* Command port */
     port_byte_out(0x40, low);

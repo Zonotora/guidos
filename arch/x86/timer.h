@@ -1,7 +1,7 @@
 #ifndef TIMER_H
 #define TIMER_H
 
-void init_timer(u32 freq);
+void init_timer(unsigned int freq);
 
 #endif
 

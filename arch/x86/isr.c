@@ -1,46 +1,46 @@
 #include "isr.h"
 #include "idt.h"
 #include "ports.h"
-#include "../drivers/screen.h"
-#include "../libc/string.h"
+#include "drivers/screen.h"
+#include "libc/string.h"
 
 isr_t interrupt_handlers[256];
 
 /* Can't do this with a loop because we need the address
  * of the function names */
 void isr_install() {
-    set_idt_gate(0, (u32)isr0);
-    set_idt_gate(1, (u32)isr1);
-    set_idt_gate(2, (u32)isr2);
-    set_idt_gate(3, (u32)isr3);
-    set_idt_gate(4, (u32)isr4);
-    set_idt_gate(5, (u32)isr5);
-    set_idt_gate(6, (u32)isr6);
-    set_idt_gate(7, (u32)isr7);
-    set_idt_gate(8, (u32)isr8);
-    set_idt_gate(9, (u32)isr9);
-    set_idt_gate(10, (u32)isr10);
-    set_idt_gate(11, (u32)isr11);
-    set_idt_gate(12, (u32)isr12);
-    set_idt_gate(13, (u32)isr13);
-    set_idt_gate(14, (u32)isr14);
-    set_idt_gate(15, (u32)isr15);
-    set_idt_gate(16, (u32)isr16);
-    set_idt_gate(17, (u32)isr17);
-    set_idt_gate(18, (u32)isr18);
-    set_idt_gate(19, (u32)isr19);
-    set_idt_gate(20, (u32)isr20);
-    set_idt_gate(21, (u32)isr21);
-    set_idt_gate(22, (u32)isr22);
-    set_idt_gate(23, (u32)isr23);
-    set_idt_gate(24, (u32)isr24);
-    set_idt_gate(25, (u32)isr25);
-    set_idt_gate(26, (u32)isr26);
-    set_idt_gate(27, (u32)isr27);
-    set_idt_gate(28, (u32)isr28);
-    set_idt_gate(29, (u32)isr29);
-    set_idt_gate(30, (u32)isr30);
-    set_idt_gate(31, (u32)isr31);
+    set_idt_gate(0, (unsigned int)isr0);
+    set_idt_gate(1, (unsigned int)isr1);
+    set_idt_gate(2, (unsigned int)isr2);
+    set_idt_gate(3, (unsigned int)isr3);
+    set_idt_gate(4, (unsigned int)isr4);
+    set_idt_gate(5, (unsigned int)isr5);
+    set_idt_gate(6, (unsigned int)isr6);
+    set_idt_gate(7, (unsigned int)isr7);
+    set_idt_gate(8, (unsigned int)isr8);
+    set_idt_gate(9, (unsigned int)isr9);
+    set_idt_gate(10, (unsigned int)isr10);
+    set_idt_gate(11, (unsigned int)isr11);
+    set_idt_gate(12, (unsigned int)isr12);
+    set_idt_gate(13, (unsigned int)isr13);
+    set_idt_gate(14, (unsigned int)isr14);
+    set_idt_gate(15, (unsigned int)isr15);
+    set_idt_gate(16, (unsigned int)isr16);
+    set_idt_gate(17, (unsigned int)isr17);
+    set_idt_gate(18, (unsigned int)isr18);
+    set_idt_gate(19, (unsigned int)isr19);
+    set_idt_gate(20, (unsigned int)isr20);
+    set_idt_gate(21, (unsigned int)isr21);
+    set_idt_gate(22, (unsigned int)isr22);
+    set_idt_gate(23, (unsigned int)isr23);
+    set_idt_gate(24, (unsigned int)isr24);
+    set_idt_gate(25, (unsigned int)isr25);
+    set_idt_gate(26, (unsigned int)isr26);
+    set_idt_gate(27, (unsigned int)isr27);
+    set_idt_gate(28, (unsigned int)isr28);
+    set_idt_gate(29, (unsigned int)isr29);
+    set_idt_gate(30, (unsigned int)isr30);
+    set_idt_gate(31, (unsigned int)isr31);
 
     // Remap the PIC
     port_byte_out(0x20, 0x11);
@@ -55,22 +55,22 @@ void isr_install() {
     port_byte_out(0xA1, 0x0);
 
     // Install the IRQs
-    set_idt_gate(32, (u32)irq0);
-    set_idt_gate(33, (u32)irq1);
-    set_idt_gate(34, (u32)irq2);
-    set_idt_gate(35, (u32)irq3);
-    set_idt_gate(36, (u32)irq4);
-    set_idt_gate(37, (u32)irq5);
-    set_idt_gate(38, (u32)irq6);
-    set_idt_gate(39, (u32)irq7);
-    set_idt_gate(40, (u32)irq8);
-    set_idt_gate(41, (u32)irq9);
-    set_idt_gate(42, (u32)irq10);
-    set_idt_gate(43, (u32)irq11);
-    set_idt_gate(44, (u32)irq12);
-    set_idt_gate(45, (u32)irq13);
-    set_idt_gate(46, (u32)irq14);
-    set_idt_gate(47, (u32)irq15);
+    set_idt_gate(32, (unsigned int)irq0);
+    set_idt_gate(33, (unsigned int)irq1);
+    set_idt_gate(34, (unsigned int)irq2);
+    set_idt_gate(35, (unsigned int)irq3);
+    set_idt_gate(36, (unsigned int)irq4);
+    set_idt_gate(37, (unsigned int)irq5);
+    set_idt_gate(38, (unsigned int)irq6);
+    set_idt_gate(39, (unsigned int)irq7);
+    set_idt_gate(40, (unsigned int)irq8);
+    set_idt_gate(41, (unsigned int)irq9);
+    set_idt_gate(42, (unsigned int)irq10);
+    set_idt_gate(43, (unsigned int)irq11);
+    set_idt_gate(44, (unsigned int)irq12);
+    set_idt_gate(45, (unsigned int)irq13);
+    set_idt_gate(46, (unsigned int)irq14);
+    set_idt_gate(47, (unsigned int)irq15);
 
     set_idt(); // Load with ASM
 }
@@ -124,7 +124,7 @@ void isr_handler(registers_t r) {
     kprint("\n");
 }
 
-void register_interrupt_handler(u8 n, isr_t handler) {
+void register_interrupt_handler(unsigned char n, isr_t handler) {
     kprint("Registered interrupt handler: ");
     char buf[32];
     int_to_ascii(n, buf);
