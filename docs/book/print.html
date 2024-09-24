@@ -89,7 +89,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded "><a href="assembly.html"><strong aria-hidden="true">1.</strong> Assembly</a></li><li class="chapter-item expanded "><a href="boot.html"><strong aria-hidden="true">2.</strong> Boot</a></li><li class="chapter-item expanded "><a href="interrupts.html"><strong aria-hidden="true">3.</strong> Interrupts</a></li><li class="chapter-item expanded "><a href="filesystem.html"><strong aria-hidden="true">4.</strong> Filesystem</a></li><li class="chapter-item expanded "><a href="threads.html"><strong aria-hidden="true">5.</strong> Threads</a></li><li class="chapter-item expanded "><a href="system_calls.html"><strong aria-hidden="true">6.</strong> System Calls</a></li><li class="chapter-item expanded "><a href="virtual_memory.html"><strong aria-hidden="true">7.</strong> Virtual Memory</a></li><li class="chapter-item expanded affix "><a href="references.html">References</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="assembly.html">Assembly</a></li><li class="chapter-item expanded affix "><a href="stack_heap.html">Stack and Heap</a></li><li class="chapter-item expanded affix "><a href="requirements.html">Requirements</a></li><li class="chapter-item expanded "><a href="boot.html"><strong aria-hidden="true">1.</strong> Boot</a></li><li class="chapter-item expanded "><a href="interrupts.html"><strong aria-hidden="true">2.</strong> Interrupts</a></li><li class="chapter-item expanded "><a href="filesystem.html"><strong aria-hidden="true">3.</strong> Filesystem</a></li><li class="chapter-item expanded "><a href="threads.html"><strong aria-hidden="true">4.</strong> Threads</a></li><li class="chapter-item expanded "><a href="system_calls.html"><strong aria-hidden="true">5.</strong> System Calls</a></li><li class="chapter-item expanded "><a href="virtual_memory.html"><strong aria-hidden="true">6.</strong> Virtual Memory</a></li><li class="chapter-item expanded "><a href="arm.html"><strong aria-hidden="true">7.</strong> ARM</a></li><li class="chapter-item expanded affix "><a href="references.html">References</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -177,21 +177,86 @@
                         <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
 <p><a href="https://wiki.osdev.org/Expanded_Main_Page">OS Dev</a></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="assembly"><a class="header" href="#assembly">Assembly</a></h1>
+<p>There are a couple of file extensions used for assembly files: [<code>.a</code>, <code>.s</code>, <code>.S</code>, <code>.asm</code>]</p>
+<p>In x86, there are two separate versions of assembly syntax:</p>
+<ul>
+<li>AT&amp;T (used by Unix compilers like <code>gcc</code>)</li>
+<li>Intel/NASM (with a couple dialects, like MASM vs. NASM itself).</li>
+</ul>
+<p>Intel syntax is dominant in the DOS and Windows world, and AT&amp;T syntax is dominant in the Unix world.</p>
+<p>The <code>.S</code> file extension is appropriate for assembly files with GNU syntax using <code>as</code>, while <code>.asm</code> more often is associated with Intel syntax NASM/YASM, or MASM, source code.</p>
+<div class="table-wrapper"><table><thead><tr><th></th><th>AT&amp;T</th><th>Intel</th></tr></thead><tbody>
+<tr><td>Parameter order</td><td><code>movl $5, %eax</code> <br> Source before the destination</td><td><code>mov eax, 5</code> <br> Destination before source</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="stackheap"><a class="header" href="#stackheap">Stack/Heap</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="requirements"><a class="header" href="#requirements">Requirements</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="boot"><a class="header" href="#boot">Boot</a></h1>
-<h2 id="boot-sector"><a class="header" href="#boot-sector">Boot sector</a></h2>
+<h2 id="execution-mode"><a class="header" href="#execution-mode">Execution mode</a></h2>
+<p>The modes in which x86 code can be executed in are:</p>
+<ul>
+<li>
+<p><code>Real mode (16-bit)</code></p>
+<ul>
+<li>Computers that <strong>use</strong> BIOS start up in this mode.</li>
+<li>20-bit segmented memory address space (meaning that only 1 MB of memory can be addressed— actually since 80286 a little more through HMA)</li>
+<li>Direct software access to peripheral hardware</li>
+<li>No concept of memory protection or multitasking at the hardware level.</li>
+</ul>
+</li>
+<li>
+<p><code>Protected mode (16-bit and 32-bit)</code></p>
+<ul>
+<li>Expands addressable physical memory to 16 MB and addressable virtual memory to 1 GB.</li>
+<li>Provides privilege levels and protected memory, which prevents programs from corrupting one another.</li>
+<li>16-bit protected mode (used during the end of the DOS era) used a complex, multi-segmented memory model.</li>
+<li>32-bit protected mode uses a simple, flat memory model.</li>
+</ul>
+</li>
+<li>
+<p><code>Long mode (64-bit)</code></p>
+<ul>
+<li>Mostly an extension of the 32-bit (protected mode) instruction set, but unlike the 16–to–32-bit transition, many instructions were dropped in the 64-bit mode. Pioneered by AMD.</li>
+</ul>
+</li>
+<li>
+<p><code>Virtual 8086 mode (16-bit)</code></p>
+<ul>
+<li>A special hybrid operating mode that allows real mode programs and operating systems to run while under the control of a protected mode supervisor operating system</li>
+</ul>
+</li>
+<li>
+<p><code>System Management Mode (16-bit)</code></p>
+<ul>
+<li>Handles system-wide functions like power management, system hardware control, and proprietary OEM designed code.</li>
+<li>It is intended for use only by system firmware.</li>
+<li>All normal execution, including the operating system, is suspended.</li>
+<li>An alternate software system (which usually resides in the computer's firmware, or a hardware-assisted debugger) is then executed with high privileges.</li>
+</ul>
+</li>
+</ul>
+<h2 id="segmentation"><a class="header" href="#segmentation">Segmentation</a></h2>
+<p>There are some special combinations of segment registers and general registers that point to important addresses:</p>
+<div class="table-wrapper"><table><thead><tr><th>Register Pair</th><th>Full Name</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>CS:IP</code></td><td>Code Segment : Instruction Pointer</td><td>Points to the address where the processor will fetch the next byte of code.</td></tr>
+<tr><td><code>SS:SP</code></td><td>Stack Segment : Stack Pointer</td><td>Points to the address of the top of the stack, i.e., the most recently pushed byte.</td></tr>
+<tr><td><code>SS:BP</code></td><td>Stack Segment : Base Pointer</td><td>Points to the address of the top of the stack frame, i.e., the base of the data area in the call stack for the currently active subprogram.</td></tr>
+<tr><td><code>DS:SI</code></td><td>Data Segment : Source Index</td><td>Often used to point to string data that is about to be copied to ES:DI.</td></tr>
+<tr><td><code>ES:DI</code></td><td>Extra Segment : Destination Index</td><td>Typically used to point to the destination for a string copy, as mentioned above.</td></tr>
+</tbody></table>
+</div>
 <h2 id="boot-loader"><a class="header" href="#boot-loader">Boot loader</a></h2>
+<p>With a computer running legacy BIOS, the BIOS and the boot loader run in Real mode.
+The 64-bit operating system kernel checks and switches the CPU into Long mode and then starts new kernel-mode threads running 64-bit code.</p>
+<p>With a computer running UEFI, the UEFI firmware (except CSM and legacy Option ROM), the UEFI boot loader and the UEFI operating system kernel all run in Long mode.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="interrupts"><a class="header" href="#interrupts">Interrupts</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="filesystem"><a class="header" href="#filesystem">Filesystem</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="threads"><a class="header" href="#threads">Threads</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="system-calls"><a class="header" href="#system-calls">System Calls</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="virtual-memory"><a class="header" href="#virtual-memory">Virtual Memory</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="arm"><a class="header" href="#arm">ARM</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="introduction-1"><a class="header" href="#introduction-1">Introduction</a></h1>
 <ol>
 <li>OS Dev <a href="https://wiki.osdev.org/Expanded_Main_Page">https://wiki.osdev.org/Expanded_Main_Page</a></li>
-</ol>
-<h1 id="boot-1"><a class="header" href="#boot-1">Boot</a></h1>
-<ol>
-<li>This is a link <a href="https://zonotora.github.io/os/book/index.html">https://zonotora.github.io/os/book/index.html</a></li>
 </ol>
 
                     </main>
