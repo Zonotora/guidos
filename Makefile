@@ -6,6 +6,12 @@ OBJ = ${C_SOURCES:.c=.o arch/x86/interrupt.o}
 CLANG = clang -m32 -target -i386-none-eabi
 CFLAGS = -g
 
+i386-hdd: image.bin
+	qemu-system-i386 -drive file=image.bin,format=raw
+
+i386-floppy: image.bin
+	qemu-system-i386 -fda image.bin
+
 image.bin: arch/x86/boot/boot.bin kernel.bin
 	cat $^ > image.bin
 
@@ -20,12 +26,6 @@ debug: image.bin kernel.elf
 	gdb -ex "target remote localhost:1234" \
 			-ex "symbol-file kernel.elf" \
 			-ex "tui layout src" \
-
-i386-hdd: image.bin
-	qemu-system-i386 -drive file=image.bin,format=raw
-
-i386-floppy: image.bin
-	qemu-system-i386 -fda image.bin
 
 %.o: %.c ${HEADERS}
 	${CLANG} ${CFLAGS} -I. -ffreestanding -c $< -o $@
