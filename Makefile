@@ -12,7 +12,7 @@ i386-hdd: image.bin
 i386-floppy: image.bin
 	qemu-system-i386 -fda image.bin
 
-image.bin: arch/x86/boot/boot.bin kernel.bin
+image.bin: arch/x86/boot/loader.bin kernel.bin
 	cat $^ > image.bin
 
 kernel.bin: arch/x86/boot/kernel_entry.o ${OBJ}
