@@ -89,7 +89,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="assembly.html">Assembly</a></li><li class="chapter-item expanded affix "><a href="stack_heap.html">Stack and Heap</a></li><li class="chapter-item expanded affix "><a href="requirements.html">Requirements</a></li><li class="chapter-item expanded "><a href="boot.html"><strong aria-hidden="true">1.</strong> Boot</a></li><li class="chapter-item expanded "><a href="interrupts.html"><strong aria-hidden="true">2.</strong> Interrupts</a></li><li class="chapter-item expanded "><a href="filesystem.html"><strong aria-hidden="true">3.</strong> Filesystem</a></li><li class="chapter-item expanded "><a href="threads.html"><strong aria-hidden="true">4.</strong> Threads</a></li><li class="chapter-item expanded "><a href="system_calls.html"><strong aria-hidden="true">5.</strong> System Calls</a></li><li class="chapter-item expanded "><a href="virtual_memory.html"><strong aria-hidden="true">6.</strong> Virtual Memory</a></li><li class="chapter-item expanded "><a href="arm.html"><strong aria-hidden="true">7.</strong> ARM</a></li><li class="chapter-item expanded affix "><a href="references.html">References</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="assembly.html">Assembly</a></li><li class="chapter-item expanded affix "><a href="stack_heap.html">Stack and Heap</a></li><li class="chapter-item expanded affix "><a href="requirements.html">Requirements</a></li><li class="chapter-item expanded "><a href="boot.html"><strong aria-hidden="true">1.</strong> Boot</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="boot/disk.html"><strong aria-hidden="true">1.1.</strong> Disk</a></li></ol></li><li class="chapter-item expanded "><a href="interrupts.html"><strong aria-hidden="true">2.</strong> Interrupts</a></li><li class="chapter-item expanded "><a href="filesystem.html"><strong aria-hidden="true">3.</strong> Filesystem</a></li><li class="chapter-item expanded "><a href="threads.html"><strong aria-hidden="true">4.</strong> Threads</a></li><li class="chapter-item expanded "><a href="system_calls.html"><strong aria-hidden="true">5.</strong> System Calls</a></li><li class="chapter-item expanded "><a href="virtual_memory.html"><strong aria-hidden="true">6.</strong> Virtual Memory</a></li><li class="chapter-item expanded "><a href="arm.html"><strong aria-hidden="true">7.</strong> ARM</a></li><li class="chapter-item expanded affix "><a href="references.html">References</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -248,7 +248,39 @@
 <p>With a computer running legacy BIOS, the BIOS and the boot loader run in Real mode.
 The 64-bit operating system kernel checks and switches the CPU into Long mode and then starts new kernel-mode threads running 64-bit code.</p>
 <p>With a computer running UEFI, the UEFI firmware (except CSM and legacy Option ROM), the UEFI boot loader and the UEFI operating system kernel all run in Long mode.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="interrupts"><a class="header" href="#interrupts">Interrupts</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="disk"><a class="header" href="#disk">Disk</a></h1>
+<h2 id="bios-disk-read"><a class="header" href="#bios-disk-read">BIOS disk read</a></h2>
+<p><code>AH = 01</code></p>
+<p>The following status codes represent controller status after last disk operation:</p>
+<div class="table-wrapper"><table><thead><tr><th>Status (AL)</th><th>Description</th></tr></thead><tbody>
+<tr><td>00</td><td>no error</td></tr>
+<tr><td>01</td><td>bad command passed to driver</td></tr>
+<tr><td>02</td><td>address mark not found or bad sector</td></tr>
+<tr><td>03</td><td>diskette write protect error</td></tr>
+<tr><td>04</td><td>sector not found</td></tr>
+<tr><td>05</td><td>fixed disk reset failed</td></tr>
+<tr><td>06</td><td>diskette changed or removed</td></tr>
+<tr><td>07</td><td>bad fixed disk parameter table</td></tr>
+<tr><td>08</td><td>DMA overrun</td></tr>
+<tr><td>09</td><td>DMA access across 64k boundary</td></tr>
+<tr><td>0A</td><td>bad fixed disk sector flag</td></tr>
+<tr><td>0B</td><td>bad fixed disk cylinder</td></tr>
+<tr><td>0C</td><td>unsupported track/invalid media</td></tr>
+<tr><td>0D</td><td>invalid number of sectors on fixed disk format</td></tr>
+<tr><td>0E</td><td>fixed disk controlled data address mark detected</td></tr>
+<tr><td>0F</td><td>fixed disk DMA arbitration level out of range</td></tr>
+<tr><td>10</td><td>ECC/CRC error on disk read</td></tr>
+<tr><td>11</td><td>recoverable fixed disk data error, data fixed by ECC</td></tr>
+<tr><td>20</td><td>controller error (NEC for floppies)</td></tr>
+<tr><td>40</td><td>seek failure</td></tr>
+<tr><td>80</td><td>time out, drive not ready</td></tr>
+<tr><td>AA</td><td>fixed disk drive not ready</td></tr>
+<tr><td>BB</td><td>fixed disk undefined error</td></tr>
+<tr><td>CC</td><td>fixed disk write fault on selected drive</td></tr>
+<tr><td>E0</td><td>fixed disk status error/Error reg = 0</td></tr>
+<tr><td>FF</td><td>sense operation failed</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="interrupts"><a class="header" href="#interrupts">Interrupts</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="filesystem"><a class="header" href="#filesystem">Filesystem</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="threads"><a class="header" href="#threads">Threads</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="system-calls"><a class="header" href="#system-calls">System Calls</a></h1>

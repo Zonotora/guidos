@@ -6,6 +6,7 @@
 [Requirements](requirements.md)
 
 - [Boot](boot.md)
+    - [Disk](boot/disk.md)
 - [Interrupts](interrupts.md)
 - [Filesystem](filesystem.md)
 - [Threads](threads.md)
