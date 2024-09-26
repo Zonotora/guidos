@@ -3,11 +3,12 @@
 #include "drivers/keyboard.h"
 #include "drivers/screen.h"
 
-void main() {
-    isr_install();
-    asm volatile("sti");
-    init_keyboard();
 
+void kernel_main() {
+    isr_install();
+    // asm volatile("sti");
+    // init_keyboard();
+
+    while (1){};
     clear_screen();
 }
-

@@ -6,11 +6,25 @@ OBJ = ${C_SOURCES:.c=.o arch/x86/interrupt.o}
 CLANG = clang -m32 -target -i386-none-eabi
 CFLAGS = -g
 
-i386-hdd: image.bin
+.PHONY: hdd floppy grub
+
+hdd: image.bin
 	qemu-system-i386 -drive file=image.bin,format=raw
 
-i386-floppy: image.bin
+floppy: image.bin
 	qemu-system-i386 -fda image.bin
+
+
+grub: image.iso
+	qemu-system-i386 -cdrom image.iso
+
+image.iso: arch/x86/boot/multiboot/loader.o ${OBJ}
+	i386-elf-ld -T arch/x86/boot/multiboot/linker.ld -o image.bin $^
+	# clang -T arch/x86/boot/multiboot/linker.ld -o image.bin -ffreestanding -O2 -nostdlib $^
+	grub-file --is-x86-multiboot image.bin
+	mkdir -p isodir/boot/grub
+	cp image.bin isodir/boot/image.bin
+	grub-mkrescue -o image.iso isodir
 
 image.bin: arch/x86/boot/loader.bin kernel.bin
 	cat $^ > image.bin
@@ -26,9 +40,17 @@ debug: image.bin kernel.elf
 	gdb -ex "target remote localhost:1234" \
 			-ex "symbol-file kernel.elf" \
 			-ex "tui layout src" \
+			-ex "b *0x7c00" \
+
+debug-iso: image.iso kernel.elf
+	qemu-system-i386 -cdrom image.iso -S -s &
+	gdb -ex "target remote localhost:1234" \
+			-ex "symbol-file kernel.elf" \
+			-ex "tui layout src" \
+			-ex "b kernel_main" \
 
 %.o: %.c ${HEADERS}
-	${CLANG} ${CFLAGS} -I. -ffreestanding -c $< -o $@
+	${CLANG} ${CFLAGS} -I. -ffreestanding -O2 -Wall -Wextra -c $< -o $@
 
 %.o: %.asm
 	nasm $< -f elf -o $@
