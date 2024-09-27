@@ -1,7 +1,8 @@
 #include "keyboard.h"
 #include "arch/x86/isr.h"
 #include "arch/x86/ports.h"
-#include "kernel/shell.h"
+#include "drivers/screen.h"
+#include "kernel/console.h"
 #include "libc/string.h"
 
 #define SC_MAX 57
@@ -23,4 +24,7 @@ static void keyboard_callback(registers_t *regs) {
   prompt(scancode, sc_ascii[scancode]);
 }
 
-void init_keyboard() { register_interrupt_handler(IRQ1, keyboard_callback); }
+void init_keyboard() {
+  kprint("register keyboard callback\n");
+  register_interrupt_handler(IRQ1, keyboard_callback);
+}
