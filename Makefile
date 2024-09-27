@@ -20,7 +20,6 @@ grub: image.iso
 
 image.iso: arch/x86/boot/multiboot/loader.o ${OBJ}
 	i386-elf-ld -T arch/x86/boot/multiboot/linker.ld -o image.bin $^
-	# clang -T arch/x86/boot/multiboot/linker.ld -o image.bin -ffreestanding -O2 -nostdlib $^
 	grub-file --is-x86-multiboot image.bin
 	mkdir -p isodir/boot/grub
 	cp image.bin isodir/boot/image.bin
@@ -50,7 +49,7 @@ debug-iso: image.iso kernel.elf
 			-ex "b kernel_main" \
 
 %.o: %.c ${HEADERS}
-	${CLANG} ${CFLAGS} -I. -ffreestanding -O2 -Wall -Wextra -c $< -o $@
+	${CLANG} ${CFLAGS} -I. -ffreestanding -Wall -Wextra -c $< -o $@
 
 %.o: %.asm
 	nasm $< -f elf -o $@
