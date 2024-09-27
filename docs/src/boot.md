@@ -34,6 +34,13 @@ The modes in which x86 code can be executed in are:
     - All normal execution, including the operating system, is suspended.
     - An alternate software system (which usually resides in the computer's firmware, or a hardware-assisted debugger) is then executed with high privileges.
 
+## Boot loader
+
+With a computer running legacy BIOS, the BIOS and the boot loader run in Real mode.
+The 64-bit operating system kernel checks and switches the CPU into Long mode and then starts new kernel-mode threads running 64-bit code.
+
+With a computer running UEFI, the UEFI firmware (except CSM and legacy Option ROM), the UEFI boot loader and the UEFI operating system kernel all run in Long mode.
+
 ## Segmentation
 
 There are some special combinations of segment registers and general registers that point to important addresses:
@@ -45,11 +52,3 @@ There are some special combinations of segment registers and general registers t
 |`SS:BP`| Stack Segment : Base Pointer | Points to the address of the top of the stack frame, i.e., the base of the data area in the call stack for the currently active subprogram.|
 |`DS:SI`| Data Segment : Source Index |Often used to point to string data that is about to be copied to ES:DI.|
 |`ES:DI`| Extra Segment : Destination Index | Typically used to point to the destination for a string copy, as mentioned above.|
-
-
-## Boot loader
-
-With a computer running legacy BIOS, the BIOS and the boot loader run in Real mode.
-The 64-bit operating system kernel checks and switches the CPU into Long mode and then starts new kernel-mode threads running 64-bit code.
-
-With a computer running UEFI, the UEFI firmware (except CSM and legacy Option ROM), the UEFI boot loader and the UEFI operating system kernel all run in Long mode.

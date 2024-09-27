@@ -3,6 +3,7 @@
 [Introduction](README.md)
 [Assembly](assembly.md)
 [Stack and Heap](stack_heap.md)
+[Storage](storage.md)
 [Requirements](requirements.md)
 
 - [Boot](boot.md)
