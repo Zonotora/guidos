@@ -1,7 +1,9 @@
 #ifndef TIMER_H
 #define TIMER_H
 
-void init_timer(unsigned int freq);
+#include <stdint.h>
+
+void timer_init();
+void timer_msleep(int32_t ms);
 
 #endif
-

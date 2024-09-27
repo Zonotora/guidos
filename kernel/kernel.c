@@ -7,6 +7,12 @@ void kernel_main() {
   isr_install();
   asm volatile("sti");
   init_keyboard();
+  timer_init();
 
   clear_screen();
+
+  while (1) {
+    timer_msleep(100);
+    kprint("Hello\n");
+  }
 }
