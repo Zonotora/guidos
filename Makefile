@@ -59,3 +59,7 @@ debug-iso: image.iso kernel.elf
 
 clean:
 	find . -name '*.o' | xargs rm -f
+	find . -name '*.img' | xargs rm -f
+	find . -name '*.bin' | xargs rm -f
+	find . -name '*.elf' | xargs rm -f
+	find . -name '*.iso' | xargs rm -f
