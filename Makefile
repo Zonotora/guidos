@@ -1,5 +1,5 @@
-C_SOURCES = $(wildcard kernel/*.c drivers/*.c arch/**/*.c libc/*.c)
-HEADERS = $(wildcard kernel/*.h drivers/*.h arch/**/*.h libc/*.h)
+C_SOURCES = $(wildcard kernel/*.c devices/*.c drivers/*.c arch/**/*.c libc/*.c)
+HEADERS = $(wildcard kernel/*.h devices/*.h drivers/*.h arch/**/*.h libc/*.h)
 BIN = $(wildcard *.bin)
 OBJ = ${C_SOURCES:.c=.o arch/x86/interrupt.o}
 
