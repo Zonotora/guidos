@@ -124,25 +124,30 @@ void ata_select(ata_disk *disk) {
   }
   // For any other value, poll the status port until bit 7 clears.
   for (size_t i = 0; i < MAX_BUSY_WAIT_TIME; i++) {
+    status = port_byte_in(PORT_STATUS(channel));
     if (!(status & STATUS_BSY)) {
-      status = port_byte_in(PORT_STATUS(channel));
       // Some ATAPI drives do not follow spec... So we need to check the
       // LBA_MID and LBA_HI ports to see if they are non-zero. If they are
       // the drive is not ATA.
-      uint8_t lba_mid = (PORT_LBA_MID(channel));
-      uint8_t lba_hi = (PORT_LBA_MID(channel));
+      uint8_t lba_mid = port_byte_in(PORT_LBA_MID(channel));
+      uint8_t lba_hi = port_byte_in(PORT_LBA_HI(channel));
       if (lba_mid > 0 || lba_hi > 0) {
         kprint("not an ata device\n");
-        return;
+        break;
       }
 
+      status = port_byte_in(PORT_STATUS(channel));
       if (status & STATUS_DRQ) {
         // Data is ready to be sent. Read 256 16-bit values from the data port
         // and store that information.
-        // insw(PORT_COMMAND(channel), sector, BLOCK_SIZE_SECTOR / 2);
+        insw(PORT_COMMAND(channel), sector, BLOCK_SIZE_SECTOR / 2);
+        kprint(sector);
         kprint("data is ready to be sent\n");
+        break;
       } else if (status & STATUS_ERR) {
         // Failed to read disk.
+        kprint("failed to read disk\n");
+        break;
       }
     }
 
