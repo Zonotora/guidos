@@ -6,8 +6,10 @@
 [Storage](storage.md)
 [Requirements](requirements.md)
 
-- [Boot](boot.md)
-    - [Disk](boot/disk.md)
+- [Bootloader](bootloader.md)
+    - [Segmentation](bootloader/segmentation.md)
+    - [Disk](bootloader/disk.md)
+    - [GRUB](bootloader/grub.md)
 - [Interrupts](interrupts.md)
 - [Filesystem](filesystem.md)
 - [Threads](threads.md)
@@ -16,3 +18,4 @@
 - [ARM](arm.md)
 
 [References](references.md)
+[Extras](extras.md)
