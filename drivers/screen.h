@@ -1,6 +1,8 @@
 #ifndef SCREEN_H
 #define SCREEN_H
 
+#include <stdarg.h>
+
 #define VIDEO_ADDRESS 0xb8000
 #define MAX_ROWS 25
 #define MAX_COLS 80
@@ -17,8 +19,9 @@
 
 /* Public kernel API */
 void clear_screen();
-void kprint_at(char *message, unsigned char col, unsigned char row);
-void kprint(char *message);
+void kprint_at(const char *message, unsigned char col, unsigned char row);
+void kprint(const char *message);
+void kprintf(const char *format, ...);
 void backspace();
 
 #endif

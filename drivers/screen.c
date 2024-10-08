@@ -1,8 +1,9 @@
 #include "screen.h"
-
 #include "arch/x86/ports.h"
 #include "libc/mem.h"
 #include "libc/string.h"
+#include <limits.h>
+#include <stdint.h>
 
 char *const VGA = (char *const)VIDEO_ADDRESS;
 
@@ -61,32 +62,105 @@ void clear_screen() {
   set_cursor(0, 0);
 }
 
-void kprint_at(char *message, unsigned char row, unsigned char col) {
-  char *s = message;
-  while (*s != 0) {
-    if (*s == '\n') {
-      row += 1;
-      col = 0;
-      set_cursor(row, col);
-      s += 1;
-      continue;
-    }
-
-    unsigned short offset = get_offset(row, col);
-    offset = write_vga(*s, WHITE_ON_BLACK, offset);
-    s += 1;
-    offset += 1;
-    row = offset / MAX_COLS;
-    col = offset % MAX_COLS;
-    set_cursor(row, col);
-  }
-}
-
-void kprint(char *message) {
+void kputchar(char c) {
   unsigned short offset = get_cursor();
   unsigned char row = offset / MAX_COLS;
   unsigned char col = offset % MAX_COLS;
-  kprint_at(message, row, col);
+  if (c == '\n') {
+    row += 1;
+    col = 0;
+    set_cursor(row, col);
+    return;
+  }
+  offset = write_vga(c, WHITE_ON_BLACK, offset);
+  offset += 1;
+  row = offset / MAX_COLS;
+  col = offset % MAX_COLS;
+  set_cursor(row, col);
+}
+
+void kprint_at(const char *message, unsigned char row, unsigned char col) {
+  set_cursor(row, col);
+  while (*message) {
+    kputchar(*message);
+    message++;
+  }
+}
+
+void kprint(const char *message) {
+  while (*message) {
+    kputchar(*message);
+    message++;
+  }
+}
+
+// Limited version of vprintf() which only supports the following specifiers:
+//
+// - d/i: Signed decimal integer
+// NOT IMPLEMENTED - u: Unsigned decimal integer
+// NOT IMPLEMENTED - o: Unsigned octal
+// NOT IMPLEMENTED - x: Unsigned hexadecimal integer
+// NOT IMPLEMENTED - X: Unsigned hexadecimal integer (uppercase)
+// NOT IMPLEMENTED - c: Character
+// NOT IMPLEMENTED - s: String of characters
+// NOT IMPLEMENTED - p: Pointer address
+// NOT IMPLEMENTED - %: Literal '%'
+void kvprintf(const char *format, va_list arg) {
+  while (*format) {
+
+    // Print character
+    if (*format != '%') {
+      kputchar(*format);
+      format++;
+      continue;
+    }
+
+    // Otherwise parse specifier
+    // *format='%', increment to get specifier
+    format++;
+
+    if (!*format)
+      return;
+
+    switch (*format) {
+    case 'd':
+    case 'i': {
+      int n = va_arg(arg, int);
+      if (n == INT_MIN) {
+        kprint("-2147483648");
+        break;
+      }
+
+      if (n < 0) {
+        kputchar('-');
+      }
+
+      char buf[10];
+      char *buf_p = buf;
+
+      while (n) {
+        *buf_p++ = '0' + n % 10;
+        n = n / 10;
+      }
+      while (buf_p != buf) {
+        kputchar(*--buf_p);
+      }
+
+    } break;
+
+    default:
+      break;
+    }
+
+    format++;
+  }
+}
+
+void kprintf(const char *format, ...) {
+  va_list args;
+  va_start(args, format);
+  kvprintf(format, args);
+  va_end(args);
 }
 
 void backspace() {
