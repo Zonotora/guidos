@@ -94,13 +94,41 @@ void kprint(const char *message) {
   }
 }
 
+char to_upper(char c) {
+  if (c < 97 || c > 122)
+    return c;
+
+  return c - 32;
+}
+
+char to_lower(char c) {
+  if (c < 65 || c > 90)
+    return c;
+
+  return c + 32;
+}
+
+static inline char to_hex(uint8_t n) {
+  if (n >= 16) {
+    return 0;
+  }
+  char chars[] = {'a', 'b', 'c', 'd', 'e', 'f'};
+  if (n >= 10) {
+    return chars[n % 10];
+  }
+
+  return '0' + n;
+}
+
+// static void print_hex()
+
 // Limited version of vprintf() which only supports the following specifiers:
 //
 // - d/i: Signed decimal integer
 // NOT IMPLEMENTED - u: Unsigned decimal integer
 // NOT IMPLEMENTED - o: Unsigned octal
-// NOT IMPLEMENTED - x: Unsigned hexadecimal integer
-// NOT IMPLEMENTED - X: Unsigned hexadecimal integer (uppercase)
+// - x: Unsigned hexadecimal integer
+// - X: Unsigned hexadecimal integer (uppercase)
 // NOT IMPLEMENTED - c: Character
 // NOT IMPLEMENTED - s: String of characters
 // NOT IMPLEMENTED - p: Pointer address
@@ -142,6 +170,33 @@ void kvprintf(const char *format, va_list arg) {
         *buf_p++ = '0' + n % 10;
         n = n / 10;
       }
+      while (buf_p != buf) {
+        kputchar(*--buf_p);
+      }
+
+    } break;
+    case 'x':
+    case 'X': {
+      int n = va_arg(arg, int);
+      char buf[8];
+      char *buf_p = buf;
+      kprint("0x");
+
+      for (size_t i = 0; i < 8; i++) {
+        buf[i] = '0';
+      }
+
+      while (n) {
+        *buf_p = to_hex(n % 16);
+        if (*format == 'X') {
+          *buf_p = to_upper(*buf_p);
+        }
+        buf_p++;
+        n = n / 16;
+      }
+
+      buf_p = buf + 8;
+
       while (buf_p != buf) {
         kputchar(*--buf_p);
       }
