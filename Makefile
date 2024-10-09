@@ -39,7 +39,7 @@ debug: image.bin kernel.elf
 	gdb -ex "target remote localhost:1234" \
 			-ex "symbol-file kernel.elf" \
 			-ex "tui layout src" \
-			-ex "b *0x7c00" \
+			-ex "b kernel_main" \
 
 debug-iso: image.iso kernel.elf
 	qemu-system-i386 -cdrom image.iso -S -s &
@@ -57,9 +57,12 @@ debug-iso: image.iso kernel.elf
 %.bin: %.asm
 	nasm $< -f bin -o $@
 
+ramdisk:
+	mkfs.fat -F 16 -C ramdisk.img 10000
+
 clean:
 	find . -name '*.o' | xargs rm -f
-	find . -name '*.img' | grep -v "fat16_ramdisk.img" | xargs rm -f
+	find . -name '*.img' | grep -v "ramdisk.img" | xargs rm -f
 	find . -name '*.bin' | xargs rm -f
 	find . -name '*.elf' | xargs rm -f
 	find . -name '*.iso' | xargs rm -f

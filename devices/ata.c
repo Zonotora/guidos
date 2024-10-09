@@ -1,11 +1,9 @@
 #include "arch/x86/ports.h"
 #include "arch/x86/timer.h"
 #include "drivers/screen.h"
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-
-#define PORT_BASE_PRIMARY 0x1f0
-#define PORT_BASE_SECONDARY 0x170
 
 #define PORT_DATA(CHANNEL) ((CHANNEL)->port_base + 0)
 #define PORT_ERROR(CHANNEL) ((CHANNEL)->port_base + 1)
@@ -16,6 +14,13 @@
 #define PORT_DRIVE_SELECT(CHANNEL) ((CHANNEL)->port_base + 6)
 #define PORT_STATUS(CHANNEL) ((CHANNEL)->port_base + 7)
 #define PORT_COMMAND(CHANNEL) ((CHANNEL)->port_base + 7)
+
+#define PORT_CONTROL(CHANNEL) ((CHANNEL)->port_base + 0x206)
+#define PORT_ALTERNATIVE_STATUS(CHANNEL) ((CHANNEL)->port_base + 0x206)
+
+// NOT: The value of Alternate Status is always the same as the
+// Regular Status port (0x1F7 on the Primary bus), but reading the
+// Alternate Status port does not affect interrupts.
 
 #define SELECT_MASTER 0xa0
 #define SELECT_SLAVE 0xb0
@@ -30,127 +35,229 @@
 
 #define MAX_BUSY_WAIT_TIME 3000
 
-// Support the two "legacy" ATA channels found in a standard PC
+// Support the two "legacy" ATA channels (bus) found in a standard PC.
+// The first two buses are called the Primary and Secondary ATA bus.
+// They are almost always controlled by the IO ports PORT_BASE_PRIMARY and
+// PORT_BASE_SECONDARY unless you change it. If the next two buses exist,
+// they are norammly controlled by IO ports 0x1e8-0x1ef and 0x168-0x16f,
+// respectively.
 #define N_CHANNELS 2
-// A channel has two devices, the master and the slave
+// A channel has two devices, the master and the slave.
 #define N_DEVICES_PER_CHANNEL 2
 
-typedef struct ata_disk {
+#define PORT_BASE_PRIMARY 0x1f0
+#define PORT_BASE_SECONDARY 0x170
+// The IRQ for the Primary bus is IRQ14.
+#define IRQ_PRIMARY 14
+// The IRQ for the Secondary bus is IRQ15.
+#define IRQ_SECONDARY 15
+
+// According to specs, the PCI disk controller is supposed to be in
+// "Legacy/Compatibility" mode when the system boots. The system "should"
+// use these standardized IO port settings defined above.
+
+typedef struct ata_device {
   char name[8];
-  int device;
+  int id;
   struct ata_channel *channel;
-} ata_disk;
+  bool is_ata_disk;
+} ata_device;
 
 typedef struct ata_channel {
   char name[8];
   uint16_t port_base;
   uint8_t irq;
-  ata_disk devices[N_DEVICES_PER_CHANNEL];
+  ata_device devices[N_DEVICES_PER_CHANNEL];
 } ata_channel;
 
 static ata_channel channels[N_CHANNELS];
 
-void ata_select(ata_disk *disk);
+void ata_select_device(const ata_device *device) {
+  kprintf("selecting device %d\n", device->id);
+  uint16_t id = device->id == 1 ? SELECT_MASTER : SELECT_SLAVE;
+  port_byte_out(PORT_DRIVE_SELECT(device->channel), id);
+  port_byte_in(PORT_ALTERNATIVE_STATUS(device->channel));
+  // TOOD: We should wait 400 ns here. But, we currently only have msleep.
+  timer_msleep(1);
+}
+
+// The controller is idle when the BSY and DRQ bits are cleared.
+void wait_until_idle(const ata_device *device) {
+  for (size_t i = 0; i < 1000; i++) {
+    uint16_t status = port_byte_in(PORT_ALTERNATIVE_STATUS(device->channel));
+    if ((status & (STATUS_BSY | STATUS_DRQ)) == 0) {
+      return;
+    }
+    timer_msleep(10);
+  }
+}
+
+void sector_in(const ata_device *device, void *sector) {
+  insw(PORT_COMMAND(device->channel), sector, BLOCK_SIZE_SECTOR / 2);
+}
+
+bool wait_while_busy(const ata_device *device) {
+  // For any other value, poll the status port until bit 7 clears.
+  for (size_t i = 0; i < MAX_BUSY_WAIT_TIME; i++) {
+    uint8_t status = port_byte_in(PORT_ALTERNATIVE_STATUS(device->channel));
+    if (status & STATUS_BSY) {
+      continue;
+    }
+    // Some ATAPI drives do not follow spec... So we need to check the
+    // LBA_MID and LBA_HI ports to see if they are non-zero. If they are
+    // the drive is not ATA.
+    uint8_t lba_mid = port_byte_in(PORT_LBA_MID(device->channel));
+    uint8_t lba_hi = port_byte_in(PORT_LBA_HI(device->channel));
+    if (lba_mid > 0 || lba_hi > 0) {
+      kprint("not an ata device\n");
+      return false;
+    }
+
+    status = port_byte_in(PORT_ALTERNATIVE_STATUS(device->channel));
+    if (status & STATUS_ERR) {
+      // Failed to read disk.
+      kprint("failed to read disk\n");
+      return false;
+    } else if (status & STATUS_DRQ) {
+      // Data is ready to be sent. Read 256 16-bit values from the data port
+      // and store that information.
+      kprint("data is ready to be sent\n");
+      return true;
+    }
+    timer_msleep(10);
+  }
+}
+
+static void reset_channel(ata_channel *channel) {
+  bool present[2];
+
+  for (size_t i = 0; i < 2; i++) {
+    ata_device *device = &channel->devices[i];
+
+    ata_select_device(device);
+
+    port_byte_out(PORT_SECTORCOUNT(channel), 0x55);
+    port_byte_out(PORT_LBA_LO(channel), 0xaa);
+
+    port_byte_out(PORT_SECTORCOUNT(channel), 0xaa);
+    port_byte_out(PORT_LBA_LO(channel), 0x55);
+
+    port_byte_out(PORT_SECTORCOUNT(channel), 0x55);
+    port_byte_out(PORT_LBA_LO(channel), 0xaa);
+
+    uint16_t sectorcount = port_byte_in(PORT_SECTORCOUNT(channel));
+    uint16_t lba_lo = port_byte_in(PORT_LBA_LO(channel));
+
+    present[i] = (sectorcount == 0x55) && (lba_lo == 0xaa);
+  }
+
+  port_byte_out(PORT_CONTROL(channel), 0);
+  timer_msleep(1);
+  port_byte_out(PORT_CONTROL(channel), 0x04);
+  timer_msleep(1);
+  port_byte_out(PORT_CONTROL(channel), 0);
+
+  timer_msleep(150);
+
+  if (present[0]) {
+    ata_select_device(&channel->devices[0]);
+    wait_while_busy(&channel->devices[0]);
+  }
+
+  if (present[1]) {
+    ata_select_device(&channel->devices[1]);
+    for (size_t i = 0; i < 3000; i++) {
+      uint16_t sectorcount = port_byte_in(PORT_SECTORCOUNT(channel));
+      uint16_t lba_lo = port_byte_in(PORT_LBA_LO(channel));
+      if (sectorcount == 1 && lba_lo == 1) {
+        break;
+      }
+      timer_msleep(10);
+    }
+
+    wait_while_busy(&channel->devices[1]);
+  }
+}
+
+// All current BIOSes have standardized the use of the IDENTIFY command
+// to detect the existence of ATA bus devices, e.g., PATA, PATAPI, SATAPI, SATA.
+void ata_identify_device(ata_device *device) {
+  ata_channel *channel = device->channel;
+  uint8_t sector[BLOCK_SIZE_SECTOR];
+
+  // To use the IDENTIFY command,
+  // 1. Select the correct device.
+  wait_until_idle(device);
+  ata_select_device(device);
+  wait_until_idle(device);
+
+  // 2. Set the SECTORCOUNT, LBA_LO, LBA_MID and LBA_HI ports to 0.
+  port_byte_out(PORT_SECTORCOUNT(channel), 0);
+  port_byte_out(PORT_LBA_LO(channel), 0);
+  port_byte_out(PORT_LBA_MID(channel), 0);
+  port_byte_out(PORT_LBA_HI(channel), 0);
+
+  // 3. Send the IDENTIFY command (CMD_IDENTIFY) to the command port.
+  port_byte_out(PORT_COMMAND(channel), CMD_IDENTIFY);
+
+  // 4. Read the status port (this is the same as the command port).
+  uint8_t status = port_byte_in(PORT_STATUS(channel));
+  // If the status is 0, the drive does not exist.
+  if (status == 0) {
+    // Does not exist
+    kprint("drive does not exist\n");
+    return;
+  }
+
+  if (!wait_while_busy(device)) {
+    device->is_ata_disk = false;
+    return;
+  }
+  sector_in(device, sector);
+  kprint(sector);
+  kprint("\n");
+  uint32_t capacity = *(uint32_t *)&sector[60 * 2];
+  kprintf("capacity %d\n", capacity);
+}
 
 void ata_init() {
   // Initialize channels
-  kprint("setting up ata channels\n");
   for (size_t i = 0; i < N_CHANNELS; i++) {
+    kprintf("setting up channel %d\n", i);
     ata_channel *channel = &channels[i];
 
     // Set base port address and IRQ
     switch (i) {
     case 0:
       channel->port_base = PORT_BASE_PRIMARY;
-      channel->irq = 14 + 0x20;
+      channel->irq = IRQ_PRIMARY + 0x20;
       break;
     case 1:
       channel->port_base = PORT_BASE_SECONDARY;
-      channel->irq = 15 + 0x20;
+      channel->irq = IRQ_SECONDARY + 0x20;
       break;
 
     default:
       break;
     }
 
-    kprint("setting up devices for channel: \n");
     // Initialize devices.
     for (size_t i = 0; i < N_DEVICES_PER_CHANNEL; i++) {
-      ata_disk *device = &channel->devices[i];
+      ata_device *device = &channel->devices[i];
 
       device->channel = channel;
-      device->device = i;
-    }
-
-    // Read hard disk identity information.
-    for (size_t i = 0; i < N_DEVICES_PER_CHANNEL; i++) {
-      ata_disk *device = &channel->devices[i];
-      ata_select(device);
+      device->id = i;
     }
 
     // Register interrupt handler.
 
     // Reset hardware.
+    // reset_channel(channel);
 
-    // Check if device is an ATA hard disk.
-  }
-}
-
-void ata_select(ata_disk *disk) {
-  ata_channel *channel = disk->channel;
-  uint8_t sector[BLOCK_SIZE_SECTOR];
-
-  kprint("selecting disk\n");
-
-  // To use the IDENTIFY command, we send SELECT_MASTER or SELECT_SLAVE
-  // to the DRIVE_SELECT port. This will select as drive.
-  port_byte_out(PORT_DRIVE_SELECT(channel), SELECT_MASTER);
-
-  // Then set the SECTORCOUNT, LBA_LO, LBA_MID and LBA_HI ports to 0.
-  port_byte_out(PORT_SECTORCOUNT(channel), 0);
-  port_byte_out(PORT_LBA_LO(channel), 0);
-  port_byte_out(PORT_LBA_MID(channel), 0);
-  port_byte_out(PORT_LBA_HI(channel), 0);
-
-  // Then send the IDENTIFY command (CMD_IDENTIFY) to the command port.
-  port_byte_out(PORT_COMMAND(channel), CMD_IDENTIFY);
-
-  // Then read the status port (this is the same as the command port).
-  uint8_t status = port_byte_in(PORT_STATUS(channel));
-  // If the status is 0, the drive does not exist.
-  if (status == 0) {
-    // Does not exist
-    return;
-  }
-  // For any other value, poll the status port until bit 7 clears.
-  for (size_t i = 0; i < MAX_BUSY_WAIT_TIME; i++) {
-    status = port_byte_in(PORT_STATUS(channel));
-    if (!(status & STATUS_BSY)) {
-      // Some ATAPI drives do not follow spec... So we need to check the
-      // LBA_MID and LBA_HI ports to see if they are non-zero. If they are
-      // the drive is not ATA.
-      uint8_t lba_mid = port_byte_in(PORT_LBA_MID(channel));
-      uint8_t lba_hi = port_byte_in(PORT_LBA_HI(channel));
-      if (lba_mid > 0 || lba_hi > 0) {
-        kprint("not an ata device\n");
-        break;
-      }
-
-      status = port_byte_in(PORT_STATUS(channel));
-      if (status & STATUS_DRQ) {
-        // Data is ready to be sent. Read 256 16-bit values from the data port
-        // and store that information.
-        insw(PORT_COMMAND(channel), sector, BLOCK_SIZE_SECTOR / 2);
-        kprint(sector);
-        kprint("data is ready to be sent\n");
-        break;
-      } else if (status & STATUS_ERR) {
-        // Failed to read disk.
-        kprint("failed to read disk\n");
-        break;
-      }
+    // Read hard disk identity information.
+    for (size_t i = 0; i < N_DEVICES_PER_CHANNEL; i++) {
+      ata_device *device = &channel->devices[i];
+      ata_identify_device(device);
     }
-
-    timer_msleep(10);
   }
 }

@@ -153,14 +153,20 @@ void kvprintf(const char *format, va_list arg) {
     switch (*format) {
     case 'd':
     case 'i': {
-      int n = va_arg(arg, int);
+      uint32_t n = va_arg(arg, uint32_t);
       if (n == INT_MIN) {
         kprint("-2147483648");
         break;
       }
 
+      if (n == 0) {
+        kputchar('0');
+        break;
+      }
+
       if (n < 0) {
         kputchar('-');
+        n = -n;
       }
 
       char buf[10];
@@ -181,9 +187,9 @@ void kvprintf(const char *format, va_list arg) {
       char buf[8];
       char *buf_p = buf;
       kprint("0x");
-
-      for (size_t i = 0; i < 8; i++) {
-        buf[i] = '0';
+      if (n == 0) {
+        kputchar('0');
+        break;
       }
 
       while (n) {
@@ -194,8 +200,6 @@ void kvprintf(const char *format, va_list arg) {
         buf_p++;
         n = n / 16;
       }
-
-      buf_p = buf + 8;
 
       while (buf_p != buf) {
         kputchar(*--buf_p);
