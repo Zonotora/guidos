@@ -153,7 +153,7 @@ void kvprintf(const char *format, va_list arg) {
     switch (*format) {
     case 'd':
     case 'i': {
-      uint32_t n = va_arg(arg, uint32_t);
+      int32_t n = va_arg(arg, int32_t);
       if (n == INT_MIN) {
         kprint("-2147483648");
         break;
@@ -219,6 +219,86 @@ void kprintf(const char *format, ...) {
   va_list args;
   va_start(args, format);
   kvprintf(format, args);
+  va_end(args);
+}
+
+int vsprintf(char *s, size_t n, const char *format, va_list arg) {
+  size_t i = 0;
+  while (*format && i < n) {
+    if (*format != '%') {
+      *s++ = *format++;
+      i++;
+      continue;
+    }
+
+    // Otherwise parse specifier
+    // *format='%', increment to get specifier
+    format++;
+
+    if (!*format)
+      return i;
+
+    switch (*format) {
+    case 'd': {
+      int32_t n = va_arg(arg, int32_t);
+
+      if (n == 0 && (int32_t)(i + 1) < n) {
+        *s++ = '0';
+        i += 1;
+        break;
+      }
+
+      if ((int32_t)(i + 11) >= n) {
+        break;
+      }
+
+      if (n == INT_MIN) {
+        char *int_min = "-2147483648";
+        while (*int_min) {
+          *s++ = *int_min++;
+          i += 11;
+        }
+        break;
+      }
+
+      if (n < 0) {
+        *s++ = '-';
+        i += 1;
+        n = -n;
+      }
+
+      char buf[10];
+      char *buf_p = buf;
+
+      while (n) {
+        *buf_p++ = '0' + n % 10;
+        n = n / 10;
+      }
+      while (buf_p != buf) {
+        *s++ = *--buf_p;
+        i += 1;
+      }
+
+    } break;
+
+    default:
+      break;
+    }
+
+    format++;
+  }
+  if (i == n) {
+    *--s = 0;
+  } else {
+    *s++ = 0;
+  }
+  return i;
+}
+
+void snprintf(char *s, size_t n, const char *format, ...) {
+  va_list args;
+  va_start(args, format);
+  vsprintf(s, n, format, args);
   va_end(args);
 }
 
