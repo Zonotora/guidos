@@ -1,7 +1,9 @@
 #include "arch/x86/isr.h"
 #include "arch/x86/ports.h"
 #include "arch/x86/timer.h"
+#include "block.h"
 #include "drivers/screen.h"
+#include "partition.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -92,8 +94,27 @@ void wait_until_idle(const ata_device *device) {
   }
 }
 
-void sector_in(const ata_device *device, void *sector) {
-  insl(PORT_DATA(device->channel), sector, BLOCK_SIZE_SECTOR / 4);
+static void sector_select(ata_device *device, uint32_t sector_index) {
+  //
+}
+
+static void sector_in(const ata_device *device, void *buffer) {
+  insl(PORT_DATA(device->channel), buffer, BLOCK_SIZE_SECTOR / 4);
+}
+
+static void sector_out(const ata_device *device, void *buffer) {
+  outsl(PORT_DATA(device->channel), buffer, BLOCK_SIZE_SECTOR / 4);
+}
+
+static void read(void *device, uint32_t sector_index, void *buffer) {
+  kprint("reading ata sector\n");
+  // sector_select((ata_device *)device, sector_index);
+  // sector_in((ata_device *)device, buffer);
+}
+static void write(void *device, uint32_t sector_index, void *buffer) {
+  kprint("writing ata sector\n");
+  // sector_select((ata_device *)device, sector_index);
+  // sector_out((ata_device *)device, buffer);
 }
 
 bool wait_while_busy(const ata_device *device) {
@@ -234,6 +255,10 @@ void ata_identify_device(ata_device *device) {
   uint8_t *model_number = swap_byte_order_in_string(&sector[27 * 2], 20 * 2);
   sector[47 * 2] = '\0';
   uint32_t capacity = *(uint32_t *)&sector[60 * 2];
+
+  block_t block = block_register(device, model_number, capacity, read, write);
+
+  read_partition_table(&block);
   kprintf("capacity %d\n", capacity);
   kprint(serial_number);
   kprint("\n");
