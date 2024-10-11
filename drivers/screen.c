@@ -239,6 +239,12 @@ int vsprintf(char *s, size_t n, const char *format, va_list arg) {
       return i;
 
     switch (*format) {
+    case 'c': {
+      // TODO: Type of every va_arg
+      int32_t n = va_arg(arg, int32_t);
+      *s++ = n;
+      i++;
+    } break;
     case 'd': {
       int32_t n = va_arg(arg, int32_t);
 
@@ -287,6 +293,7 @@ int vsprintf(char *s, size_t n, const char *format, va_list arg) {
 
     format++;
   }
+
   if (i == n) {
     *--s = 0;
   } else {

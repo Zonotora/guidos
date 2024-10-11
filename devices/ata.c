@@ -65,7 +65,6 @@ typedef struct ata_device {
 } ata_device;
 
 typedef struct ata_channel {
-  char name[8];
   uint16_t port_base;
   uint8_t irq;
   ata_device devices[N_DEVICES_PER_CHANNEL];
@@ -178,6 +177,15 @@ static void reset_channel(ata_channel *channel) {
   }
 }
 
+static uint8_t *swap_byte_order_in_string(uint8_t *s, size_t n) {
+  for (size_t i = 0; i < n - 1; i += 2) {
+    uint8_t tmp = s[i];
+    s[i] = s[i + 1];
+    s[i + 1] = tmp;
+  }
+  return s;
+}
+
 // All current BIOSes have standardized the use of the IDENTIFY command
 // to detect the existence of ATA bus devices, e.g., PATA, PATAPI, SATAPI, SATA.
 void ata_identify_device(ata_device *device) {
@@ -213,17 +221,24 @@ void ata_identify_device(ata_device *device) {
     return;
   }
 
+  kprint("reading from ");
+  kprint(device->name);
   // Data is ready to be sent. Read 256 16-bit values from the data port
   // and store that information.
   sector_in(device, sector);
-  for (size_t i = 0; i < BLOCK_SIZE_SECTOR; i++) {
-    kprintf("%x ", sector[i]);
-  }
 
   // kprint(sector);
   kprint("\n");
+  uint8_t *serial_number = swap_byte_order_in_string(&sector[10 * 2], 10 * 2);
+  sector[20 * 2] = '\0';
+  uint8_t *model_number = swap_byte_order_in_string(&sector[27 * 2], 20 * 2);
+  sector[47 * 2] = '\0';
   uint32_t capacity = *(uint32_t *)&sector[60 * 2];
   kprintf("capacity %d\n", capacity);
+  kprint(serial_number);
+  kprint("\n");
+  kprint(model_number);
+  kprint("\n");
 }
 
 static void interrupt_handler(registers_t *regs) {
@@ -239,12 +254,12 @@ static void interrupt_handler(registers_t *regs) {
 
 void ata_init() {
   // Initialize channels
-  for (size_t i = 0; i < N_CHANNELS; i++) {
-    kprintf("setting up channel %d\n", i);
-    ata_channel *channel = &channels[i];
+  for (size_t ci = 0; ci < N_CHANNELS; ci++) {
+    kprintf("setting up channel %d\n", ci);
+    ata_channel *channel = &channels[ci];
 
     // Set base port address and IRQ
-    if (i == 0) {
+    if (ci == 0) {
       channel->port_base = PORT_BASE_PRIMARY;
       channel->irq = IRQ_PRIMARY + 0x20;
     } else {
@@ -253,11 +268,12 @@ void ata_init() {
     }
 
     // Initialize devices.
-    for (size_t i = 0; i < N_DEVICES_PER_CHANNEL; i++) {
-      ata_device *device = &channel->devices[i];
+    for (size_t di = 0; di < N_DEVICES_PER_CHANNEL; di++) {
+      ata_device *device = &channel->devices[di];
 
+      snprintf(device->name, sizeof(device->name), "hd%c", 'a' + ci * 2 + (1 - di));
       device->channel = channel;
-      device->id = i;
+      device->id = di;
     }
 
     // Register interrupt handler.
@@ -267,8 +283,8 @@ void ata_init() {
     // reset_channel(channel);
 
     // Read hard disk identity information.
-    for (size_t i = 0; i < N_DEVICES_PER_CHANNEL; i++) {
-      ata_device *device = &channel->devices[i];
+    for (size_t di = 0; di < N_DEVICES_PER_CHANNEL; di++) {
+      ata_device *device = &channel->devices[di];
       ata_identify_device(device);
     }
   }

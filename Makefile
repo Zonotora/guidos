@@ -8,8 +8,8 @@ CFLAGS = -g
 
 .PHONY: hdd floppy grub
 
-hdd: image.bin
-	qemu-system-i386 -drive file=image.bin,format=raw
+hda: image.bin
+	qemu-system-i386 -hda image.bin -hdb ramdisk.img
 
 floppy: image.bin
 	qemu-system-i386 -fda image.bin

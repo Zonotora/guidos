@@ -2,6 +2,7 @@
 #define SCREEN_H
 
 #include <stdarg.h>
+#include <stddef.h>
 
 #define VIDEO_ADDRESS 0xb8000
 #define MAX_ROWS 25
@@ -22,6 +23,7 @@ void clear_screen();
 void kprint_at(const char *message, unsigned char col, unsigned char row);
 void kprint(const char *message);
 void kprintf(const char *format, ...);
+void snprintf(char *s, size_t n, const char *format, ...);
 void backspace();
 
 #endif
