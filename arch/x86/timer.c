@@ -48,9 +48,9 @@ void configure_pit_channel(uint8_t channel, uint8_t mode, uint16_t frequency) {
   uint8_t high = frequency >> 8;
   // 0x36 (0b0011110) -> Channel 0 | lobyte/hibyte | Mode 2
   uint8_t value = (channel << 6) | 0x30 | (mode << 1);
-  port_byte_out(PORT_MODE, value);
-  port_byte_out(channel, low);
-  port_byte_out(channel, high);
+  outb(PORT_MODE, value);
+  outb(channel, low);
+  outb(channel, high);
 }
 
 void timer_init() {

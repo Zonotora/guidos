@@ -18,7 +18,7 @@ const char sc_ascii[] = {'?', '?', '1', '2', '3', '4', '5', '6', '7', '8', '9', 
 
 static void keyboard_callback(registers_t *regs) {
   /* The PIC leaves us the scancode in port 0x60 */
-  unsigned char scancode = port_byte_in(0x60);
+  unsigned char scancode = inb(0x60);
   if (scancode > SC_MAX)
     return;
   prompt(scancode, sc_ascii[scancode]);

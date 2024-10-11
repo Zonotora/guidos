@@ -43,16 +43,16 @@ void isr_install() {
   set_idt_gate(31, (unsigned int)isr31);
 
   // Remap the PIC
-  port_byte_out(0x20, 0x11);
-  port_byte_out(0xA0, 0x11);
-  port_byte_out(0x21, 0x20);
-  port_byte_out(0xA1, 0x28);
-  port_byte_out(0x21, 0x04);
-  port_byte_out(0xA1, 0x02);
-  port_byte_out(0x21, 0x01);
-  port_byte_out(0xA1, 0x01);
-  port_byte_out(0x21, 0x0);
-  port_byte_out(0xA1, 0x0);
+  outb(0x20, 0x11);
+  outb(0xA0, 0x11);
+  outb(0x21, 0x20);
+  outb(0xA1, 0x28);
+  outb(0x21, 0x04);
+  outb(0xA1, 0x02);
+  outb(0x21, 0x01);
+  outb(0xA1, 0x01);
+  outb(0x21, 0x0);
+  outb(0xA1, 0x0);
 
   // Install the IRQs
   set_idt_gate(32, (unsigned int)irq0);
@@ -135,8 +135,8 @@ void irq_handler(registers_t r) {
   /* After every interrupt we need to send an EOI to the PICs
    * or they will not send another interrupt again */
   if (r.int_no >= 40)
-    port_byte_out(0xA0, 0x20); /* slave */
-  port_byte_out(0x20, 0x20);   /* master */
+    outb(0xA0, 0x20); /* slave */
+  outb(0x20, 0x20);   /* master */
 
   /* Handle the interrupt in a more modular way */
   if (interrupt_handlers[r.int_no] != 0) {

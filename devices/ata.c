@@ -76,8 +76,8 @@ static ata_channel channels[N_CHANNELS];
 void ata_select_device(const ata_device *device) {
   // kprintf("selecting device %d\n", device->id);
   uint16_t id = device->id == 1 ? SELECT_MASTER : SELECT_SLAVE;
-  port_byte_out(PORT_DRIVE_SELECT(device->channel), id);
-  port_byte_in(PORT_ALTERNATIVE_STATUS(device->channel));
+  outb(PORT_DRIVE_SELECT(device->channel), id);
+  inb(PORT_ALTERNATIVE_STATUS(device->channel));
   // TOOD: We should wait 400 ns here. But, we currently only have msleep.
   timer_msleep(1);
 }
@@ -85,7 +85,7 @@ void ata_select_device(const ata_device *device) {
 // The controller is idle when the BSY and DRQ bits are cleared.
 void wait_until_idle(const ata_device *device) {
   for (size_t i = 0; i < 1000; i++) {
-    uint16_t status = port_byte_in(PORT_ALTERNATIVE_STATUS(device->channel));
+    uint16_t status = inb(PORT_ALTERNATIVE_STATUS(device->channel));
     if ((status & (STATUS_BSY | STATUS_DRQ)) == 0) {
       return;
     }
@@ -94,25 +94,25 @@ void wait_until_idle(const ata_device *device) {
 }
 
 void sector_in(const ata_device *device, void *sector) {
-  insw(PORT_DATA(device->channel), sector, BLOCK_SIZE_SECTOR / 2);
+  insl(PORT_DATA(device->channel), sector, BLOCK_SIZE_SECTOR / 4);
 }
 
 bool wait_while_busy(const ata_device *device) {
   // For any other value, poll the status port until bit 7 clears.
   for (size_t i = 0; i < MAX_BUSY_WAIT_TIME; i++) {
-    uint8_t status = port_byte_in(PORT_ALTERNATIVE_STATUS(device->channel));
+    uint8_t status = inb(PORT_ALTERNATIVE_STATUS(device->channel));
     if (!(status & STATUS_BSY)) {
       // Some ATAPI drives do not follow spec... So we need to check the
       // LBA_MID and LBA_HI ports to see if they are non-zero. If they are
       // the drive is not ATA.
-      uint8_t lba_mid = port_byte_in(PORT_LBA_MID(device->channel));
-      uint8_t lba_hi = port_byte_in(PORT_LBA_HI(device->channel));
+      uint8_t lba_mid = inb(PORT_LBA_MID(device->channel));
+      uint8_t lba_hi = inb(PORT_LBA_HI(device->channel));
       if (lba_mid > 0 || lba_hi > 0) {
         kprint("not an ata device\n");
         return false;
       }
 
-      status = port_byte_in(PORT_ALTERNATIVE_STATUS(device->channel));
+      status = inb(PORT_ALTERNATIVE_STATUS(device->channel));
       if (status & STATUS_ERR) {
         // Failed to read disk.
         kprint("failed to read disk\n");
@@ -135,26 +135,26 @@ static void reset_channel(ata_channel *channel) {
 
     ata_select_device(device);
 
-    port_byte_out(PORT_SECTORCOUNT(channel), 0x55);
-    port_byte_out(PORT_LBA_LO(channel), 0xaa);
+    outb(PORT_SECTORCOUNT(channel), 0x55);
+    outb(PORT_LBA_LO(channel), 0xaa);
 
-    port_byte_out(PORT_SECTORCOUNT(channel), 0xaa);
-    port_byte_out(PORT_LBA_LO(channel), 0x55);
+    outb(PORT_SECTORCOUNT(channel), 0xaa);
+    outb(PORT_LBA_LO(channel), 0x55);
 
-    port_byte_out(PORT_SECTORCOUNT(channel), 0x55);
-    port_byte_out(PORT_LBA_LO(channel), 0xaa);
+    outb(PORT_SECTORCOUNT(channel), 0x55);
+    outb(PORT_LBA_LO(channel), 0xaa);
 
-    uint16_t sectorcount = port_byte_in(PORT_SECTORCOUNT(channel));
-    uint16_t lba_lo = port_byte_in(PORT_LBA_LO(channel));
+    uint16_t sectorcount = inb(PORT_SECTORCOUNT(channel));
+    uint16_t lba_lo = inb(PORT_LBA_LO(channel));
 
     present[i] = (sectorcount == 0x55) && (lba_lo == 0xaa);
   }
 
-  port_byte_out(PORT_CONTROL(channel), 0);
+  outb(PORT_CONTROL(channel), 0);
   timer_msleep(10);
-  port_byte_out(PORT_CONTROL(channel), 0x04);
+  outb(PORT_CONTROL(channel), 0x04);
   timer_msleep(10);
-  port_byte_out(PORT_CONTROL(channel), 0);
+  outb(PORT_CONTROL(channel), 0);
 
   timer_msleep(150);
 
@@ -166,8 +166,8 @@ static void reset_channel(ata_channel *channel) {
   if (present[1]) {
     ata_select_device(&channel->devices[1]);
     for (size_t i = 0; i < 3000; i++) {
-      uint16_t sectorcount = port_byte_in(PORT_SECTORCOUNT(channel));
-      uint16_t lba_lo = port_byte_in(PORT_LBA_LO(channel));
+      uint16_t sectorcount = inb(PORT_SECTORCOUNT(channel));
+      uint16_t lba_lo = inb(PORT_LBA_LO(channel));
       if (sectorcount == 1 && lba_lo == 1) {
         break;
       }
@@ -191,16 +191,16 @@ void ata_identify_device(ata_device *device) {
   wait_until_idle(device);
 
   // 2. Set the SECTORCOUNT, LBA_LO, LBA_MID and LBA_HI ports to 0.
-  port_byte_out(PORT_SECTORCOUNT(channel), 0);
-  port_byte_out(PORT_LBA_LO(channel), 0);
-  port_byte_out(PORT_LBA_MID(channel), 0);
-  port_byte_out(PORT_LBA_HI(channel), 0);
+  outb(PORT_SECTORCOUNT(channel), 0);
+  outb(PORT_LBA_LO(channel), 0);
+  outb(PORT_LBA_MID(channel), 0);
+  outb(PORT_LBA_HI(channel), 0);
 
   // 3. Send the IDENTIFY command (CMD_IDENTIFY) to the command port.
-  port_byte_out(PORT_COMMAND(channel), CMD_IDENTIFY);
+  outb(PORT_COMMAND(channel), CMD_IDENTIFY);
 
   // 4. Read the status port (this is the same as the command port).
-  uint8_t status = port_byte_in(PORT_ALTERNATIVE_STATUS(channel));
+  uint8_t status = inb(PORT_ALTERNATIVE_STATUS(channel));
   // If the status is 0, the drive does not exist.
   if (status == 0) {
     // Does not exist
@@ -216,7 +216,11 @@ void ata_identify_device(ata_device *device) {
   // Data is ready to be sent. Read 256 16-bit values from the data port
   // and store that information.
   sector_in(device, sector);
-  kprint(sector);
+  for (size_t i = 0; i < BLOCK_SIZE_SECTOR; i++) {
+    kprintf("%x ", sector[i]);
+  }
+
+  // kprint(sector);
   kprint("\n");
   uint32_t capacity = *(uint32_t *)&sector[60 * 2];
   kprintf("capacity %d\n", capacity);
@@ -228,7 +232,7 @@ static void interrupt_handler(registers_t *regs) {
     if (regs->int_no != channel->irq) {
       continue;
     }
-    port_byte_in(PORT_STATUS(channel));
+    inb(PORT_STATUS(channel));
     kprint("ata interrupt\n");
   }
 }

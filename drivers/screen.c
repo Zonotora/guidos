@@ -15,18 +15,18 @@ unsigned short get_offset(unsigned char row, unsigned char col) {
 
 void set_cursor(unsigned char row, unsigned char col) {
   unsigned short offset = get_offset(row, col);
-  port_byte_out(REG_SCREEN_CTRL, VGA_OFFSET_HIGH);
-  port_byte_out(REG_SCREEN_DATA, offset >> 8);
-  port_byte_out(REG_SCREEN_CTRL, VGA_OFFSET_LOW);
-  port_byte_out(REG_SCREEN_DATA, offset & 0xFF);
+  outb(REG_SCREEN_CTRL, VGA_OFFSET_HIGH);
+  outb(REG_SCREEN_DATA, offset >> 8);
+  outb(REG_SCREEN_CTRL, VGA_OFFSET_LOW);
+  outb(REG_SCREEN_DATA, offset & 0xFF);
 }
 
 unsigned short get_cursor() {
   unsigned short offset = 0;
-  port_byte_out(REG_SCREEN_CTRL, VGA_OFFSET_HIGH);
-  offset += port_byte_in(REG_SCREEN_DATA) << 8;
-  port_byte_out(REG_SCREEN_CTRL, VGA_OFFSET_LOW);
-  offset += port_byte_in(REG_SCREEN_DATA);
+  outb(REG_SCREEN_CTRL, VGA_OFFSET_HIGH);
+  offset += inb(REG_SCREEN_DATA) << 8;
+  outb(REG_SCREEN_CTRL, VGA_OFFSET_LOW);
+  offset += inb(REG_SCREEN_DATA);
   return offset;
 }
 
