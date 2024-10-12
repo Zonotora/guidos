@@ -27,14 +27,13 @@
 
 #define SELECT_MASTER 0xa0
 #define SELECT_SLAVE 0xb0
+#define SELECT_LBA 0x40
 
 #define CMD_IDENTIFY 0xec
 
 #define STATUS_BSY 0x80
 #define STATUS_DRQ 0x08
 #define STATUS_ERR 0x01
-
-#define BLOCK_SIZE_SECTOR 512
 
 #define MAX_BUSY_WAIT_TIME 3000
 
@@ -64,6 +63,7 @@ typedef struct ata_device {
   int id;
   struct ata_channel *channel;
   bool is_ata_disk;
+  block_t *block;
 } ata_device;
 
 typedef struct ata_channel {
@@ -94,29 +94,6 @@ void wait_until_idle(const ata_device *device) {
   }
 }
 
-static void sector_select(ata_device *device, uint32_t sector_index) {
-  //
-}
-
-static void sector_in(const ata_device *device, void *buffer) {
-  insl(PORT_DATA(device->channel), buffer, BLOCK_SIZE_SECTOR / 4);
-}
-
-static void sector_out(const ata_device *device, void *buffer) {
-  outsl(PORT_DATA(device->channel), buffer, BLOCK_SIZE_SECTOR / 4);
-}
-
-static void read(void *device, uint32_t sector_index, void *buffer) {
-  kprint("reading ata sector\n");
-  // sector_select((ata_device *)device, sector_index);
-  // sector_in((ata_device *)device, buffer);
-}
-static void write(void *device, uint32_t sector_index, void *buffer) {
-  kprint("writing ata sector\n");
-  // sector_select((ata_device *)device, sector_index);
-  // sector_out((ata_device *)device, buffer);
-}
-
 bool wait_while_busy(const ata_device *device) {
   // For any other value, poll the status port until bit 7 clears.
   for (size_t i = 0; i < MAX_BUSY_WAIT_TIME; i++) {
@@ -145,6 +122,46 @@ bool wait_while_busy(const ata_device *device) {
   }
   kprintf("done busy waiting\n");
   return false;
+}
+
+static void sector_select(ata_device *device, uint32_t sector_index) {
+  wait_until_idle(device);
+  ata_select_device(device);
+  wait_until_idle(device);
+
+  outb(PORT_SECTORCOUNT(device->channel), 1);
+  // The LBA is 28 bits.
+  outb(PORT_LBA_LO(device->channel), sector_index);
+  outb(PORT_LBA_MID(device->channel), sector_index >> 8);
+  outb(PORT_LBA_HI(device->channel), (sector_index >> 16));
+  uint8_t sector_data = (sector_index >> 24) & 0xf;
+
+  uint16_t id = device->id == 1 ? SELECT_MASTER : SELECT_SLAVE;
+  // SELECT_LBA must be set for LBA28 or LBA48 transfers.
+  outb(PORT_DRIVE_SELECT(device->channel), id | sector_data | SELECT_LBA);
+}
+
+static void sector_in(const ata_device *device, void *buffer) {
+  insl(PORT_DATA(device->channel), buffer, BLOCK_SIZE_SECTOR / 4);
+}
+
+static void sector_out(const ata_device *device, void *buffer) {
+  outsl(PORT_DATA(device->channel), buffer, BLOCK_SIZE_SECTOR / 4);
+}
+
+static void read(void *device, uint32_t sector_index, void *buffer) {
+  sector_select((ata_device *)device, sector_index);
+  outb(PORT_COMMAND(((ata_device *)device)->channel), 0x20);
+  if (!wait_while_busy((ata_device *)device)) {
+    kprint("failed to read disk");
+  }
+  sector_in((ata_device *)device, buffer);
+}
+
+static void write(void *device, uint32_t sector_index, void *buffer) {
+  kprint("writing ata sector\n");
+  // sector_select((ata_device *)device, sector_index);
+  // sector_out((ata_device *)device, buffer);
 }
 
 static void reset_channel(ata_channel *channel) {
@@ -256,7 +273,7 @@ void ata_identify_device(ata_device *device) {
   sector[47 * 2] = '\0';
   uint32_t capacity = *(uint32_t *)&sector[60 * 2];
 
-  block_t block = block_register(device, model_number, capacity, read, write);
+  block_t block = block_register(device, device->name, 0, capacity, read, write);
 
   read_partition_table(&block);
   kprintf("capacity %d\n", capacity);

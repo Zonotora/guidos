@@ -1,6 +1,8 @@
 #ifndef DEVICES_PARTITION_H
 #define DEVICES_PARTITION_H
 
-void read_partition_table();
+#include "block.h"
+
+void read_partition_table(block_t *block);
 
 #endif
