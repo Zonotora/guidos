@@ -151,6 +151,11 @@ void kvprintf(const char *format, va_list arg) {
       return;
 
     switch (*format) {
+    case 's': {
+      char *s = va_arg(arg, char *);
+      kprint(s);
+    } break;
+
     case 'd':
     case 'i': {
       int32_t n = va_arg(arg, int32_t);
@@ -183,7 +188,7 @@ void kvprintf(const char *format, va_list arg) {
     } break;
     case 'x':
     case 'X': {
-      int n = va_arg(arg, int);
+      uint32_t n = va_arg(arg, uint32_t);
       char buf[8];
       char *buf_p = buf;
       kprint("0x");
