@@ -24,7 +24,7 @@ loader_start:
     mov bx, MSG_REAL_MODE
     call print
     mov bx, KERNEL_OFFSET       ; Read from disk and store in 0x1000
-    mov dh, 24
+    mov dh, 50
     mov dl, [BOOT_DRIVE]
     call disk_load
 switch_to_pm:

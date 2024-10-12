@@ -27,6 +27,7 @@ image.iso: arch/x86/boot/multiboot/loader.o ${OBJ}
 
 image.bin: arch/x86/boot/loader.bin kernel.bin
 	cat $^ > image.bin
+	truncate --size=26112 image.bin
 
 kernel.bin: arch/x86/boot/kernel_entry.o ${OBJ}
 	i386-elf-ld -o $@ -Ttext 0x1000 $^ --oformat binary
