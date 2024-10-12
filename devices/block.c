@@ -9,26 +9,25 @@ typedef struct block_array_t {
 
 block_array_t blocks;
 
-block_t block_register(const void *device, const char *name, const uint32_t start, const uint32_t size,
-                       block_read_t read, block_write_t write) {
+block_t *block_register(const void *device, const char *name, const uint32_t start, const uint32_t size,
+                        block_read_t read, block_write_t write) {
 
-  // if (blocks.length >= 10) {
-  //   kprint("too many block devices");
-  //   return 0;
-  // }
+  if (blocks.length >= 10) {
+    kprint("too many block devices");
+    return 0;
+  }
 
-  // block_t *block = &blocks.data[blocks.length++];
-  block_t block;
+  block_t *block = &blocks.data[blocks.length++];
 
   for (size_t i = 0; i < 16 - 1 && *name; i++) {
-    block.name[i] = *name++;
+    block->name[i] = *name++;
   }
-  block.name[16 - 1] = '\0';
-  block.start = start;
-  block.size = size;
-  block.read = read;
-  block.write = write;
-  block.device = device;
+  block->name[16 - 1] = '\0';
+  block->start = start;
+  block->size = size;
+  block->read = read;
+  block->write = write;
+  block->device = device;
 
   return block;
 }

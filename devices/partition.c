@@ -132,11 +132,11 @@ void read_partition_table(block_t *block) {
       continue;
     }
 
-    // char name[16];
-    // snprintf(name, 16, "%s%d", block->name, i);
-    // block_t *block_partition = block_register(block->device, name, p->sector, p->size, block->read, block->write);
-    // // TODO: Hardcoded
-    // file_system_init(block_partition, FILE_SYSTEM_FAT16);
+    char name[16];
+    snprintf(name, 16, "%s%d", block->name, i);
+    block_t *block_partition = block_register(block->device, name, p->sector, p->size, block->read, block->write);
+    // TODO: Hardcoded
+    file_system_init(block_partition, FILE_SYSTEM_FAT16);
   }
 
   kprintf("signature %x\n", mbr->signature);

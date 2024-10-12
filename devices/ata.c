@@ -63,7 +63,6 @@ typedef struct ata_device {
   int id;
   struct ata_channel *channel;
   bool is_ata_disk;
-  block_t *block;
 } ata_device;
 
 typedef struct ata_channel {
@@ -273,9 +272,9 @@ void ata_identify_device(ata_device *device) {
   sector[47 * 2] = '\0';
   uint32_t capacity = *(uint32_t *)&sector[60 * 2];
 
-  block_t block = block_register(device, device->name, 0, capacity, read, write);
+  block_t *block = block_register(device, device->name, 0, capacity, read, write);
 
-  read_partition_table(&block);
+  read_partition_table(block);
   kprintf("capacity %d\n", capacity);
   kprint(serial_number);
   kprint("\n");
