@@ -331,9 +331,12 @@ The 64-bit operating system kernel checks and switches the CPU into Long mode an
 <h2 id="gpt-partition-table"><a class="header" href="#gpt-partition-table">GPT partition table</a></h2>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="block-device"><a class="header" href="#block-device">Block device</a></h1>
 <p>In simple terms, a <em>block device</em> can be though of as a device that reads and writes one block at a time as opposed to a character device that reads and writes one byte at a time. A block here being a fixed set of bytes.</p>
-<pre><code class="language-c">typedef struct block_device_t {
-    char name[16];
-} block_device_t;
+<p>A block device is a special file that provides buffered access to a hardware device.</p>
+<pre><code class="language-c">typedef struct block_t {
+  block_read_t read;
+  block_write_t write;
+  void *device;
+} block_t;
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="threads"><a class="header" href="#threads">Threads</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="system-calls"><a class="header" href="#system-calls">System Calls</a></h1>
