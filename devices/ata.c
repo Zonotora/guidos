@@ -30,6 +30,8 @@
 #define SELECT_LBA 0x40
 
 #define CMD_IDENTIFY 0xec
+#define CMD_READ_SECTORS 0x20
+#define CMD_WRITE_SECTORS 0x30
 
 #define STATUS_BSY 0x80
 #define STATUS_DRQ 0x08
@@ -101,12 +103,14 @@ bool wait_while_busy(const ata_device *device) {
       // Some ATAPI drives do not follow spec... So we need to check the
       // LBA_MID and LBA_HI ports to see if they are non-zero. If they are
       // the drive is not ATA.
-      uint8_t lba_mid = inb(PORT_LBA_MID(device->channel));
-      uint8_t lba_hi = inb(PORT_LBA_HI(device->channel));
-      if (lba_mid > 0 || lba_hi > 0) {
-        kprint("not an ata device\n");
-        return false;
-      }
+
+      // TODO: Where to put this?
+      // uint8_t lba_mid = inb(PORT_LBA_MID(device->channel));
+      // uint8_t lba_hi = inb(PORT_LBA_HI(device->channel));
+      // if (lba_mid > 0 || lba_hi > 0) {
+      //   kprint("not an ata device\n");
+      //   return false;
+      // }
 
       status = inb(PORT_ALTERNATIVE_STATUS(device->channel));
       if (status & STATUS_ERR) {
@@ -150,17 +154,23 @@ static void sector_out(const ata_device *device, void *buffer) {
 
 static void read(void *device, uint32_t sector_index, void *buffer) {
   sector_select((ata_device *)device, sector_index);
-  outb(PORT_COMMAND(((ata_device *)device)->channel), 0x20);
+  outb(PORT_COMMAND(((ata_device *)device)->channel), CMD_READ_SECTORS);
   if (!wait_while_busy((ata_device *)device)) {
-    kprint("failed to read disk");
+    kprint("failed to read disk\n");
+    return;
   }
   sector_in((ata_device *)device, buffer);
 }
 
 static void write(void *device, uint32_t sector_index, void *buffer) {
-  kprint("writing ata sector\n");
-  // sector_select((ata_device *)device, sector_index);
-  // sector_out((ata_device *)device, buffer);
+  sector_select((ata_device *)device, sector_index);
+  outb(PORT_COMMAND(((ata_device *)device)->channel), CMD_WRITE_SECTORS);
+  if (!wait_while_busy((ata_device *)device)) {
+    kprint("failed to write disk\n");
+    return;
+  }
+  // TOOD: Need delay here (between every write, a.k.a, don't use rep outsl?)
+  sector_out((ata_device *)device, buffer);
 }
 
 static void reset_channel(ata_channel *channel) {

@@ -46,6 +46,6 @@ void block_write(block_t *block, uint32_t sector, void *buffer) {
   if (block->start <= offset && offset <= block->start + block->size) {
     block->write(block->device, offset, buffer);
   } else {
-    kprintf("write from a sector outside block device: %s", block->name);
+    kprintf("writing to a sector outside block device: %s", block->name);
   }
 }
