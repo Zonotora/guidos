@@ -15,6 +15,7 @@
     - [ATA PIO](filesystem/atapio.md)
     - [Partition](filesystem/partition.md)
     - [Block device](filesystem/block_device.md)
+    - [FAT](filesystem/fat.md)
 - [Threads](threads.md)
 - [System Calls](system_calls.md)
 - [Virtual Memory](virtual_memory.md)

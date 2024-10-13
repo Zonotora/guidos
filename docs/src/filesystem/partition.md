@@ -8,12 +8,84 @@ A *partition table* is a table that contains data of the partitions on a disk.
 
 The *Master Boot Record (MBR)* is always located on the first sector of a hard disk. It contains the partition table for the disk. The partition table comprises 64 bytes in total of the 512-byte sector.
 
-| Addresses (within MBR sector) | Length (bytes) | Description |
-|-|-|-|
-|0x000-0X1BD|446|Code area|
-|0x1BE-0X1FD|64|Master partition table|
-|0x1FE-0X1FF|2|Boot record signature|
 
+<table>
+  <thead>
+    <tr>
+      <th colspan="2">Addresses (within MBR sector)</th>
+      <th>Length (bytes)</th>
+      <th>Description</th>
+    </tr>
+    <tr>
+      <th>Decimal</th>
+      <th>Hex</th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0 - 445</td>
+      <td>0x000 - 0x1BD</td>
+      <td>446</td>
+      <td>Code area</td>
+    </tr>
+    <tr>
+      <td>446 - 509</td>
+      <td>0x1BE - 0x1FD</td>
+      <td>64</td>
+      <td>Master partition table</td>
+    </tr>
+    <tr>
+      <td>510 - 511</td>
+      <td>0x1FE - 0x1FF</td>
+      <td>2</td>
+      <td>Boot record signature</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr>
+      <th colspan="2">Addresses (within MBR sector)</th>
+      <th>Length (bytes)</th>
+      <th>Table entry</th>
+    </tr>
+    <tr>
+      <th>Decimal</th>
+      <th>Hex</th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>446 - 461</td>
+      <td>0x1BE - 0x1CD</td>
+      <td>16</td>
+      <td>Primary partition 1</td>
+    </tr>
+    <tr>
+      <td>462 - 477</td>
+      <td>0x1CE - 0x1DD</td>
+      <td>16</td>
+      <td>Primary partition 2</td>
+    </tr>
+    <tr>
+      <td>478 - 493</td>
+      <td>0x1DE - 0x1ED</td>
+      <td>16</td>
+      <td>Primary partition 3</td>
+    </tr>
+    <tr>
+      <td>494 - 509</td>
+      <td>0x1EE - 0x1FD</td>
+      <td>16</td>
+      <td>Primary partition 4</td>
+    </tr>
+  </tbody>
+</table>
 
 
 | Addresses (within partition table) | Length (bytes) | Description             |
@@ -24,13 +96,5 @@ The *Master Boot Record (MBR)* is always located on the first sector of a hard d
 |5-7|3|Ending CHS values|
 |8-11|4|Starting sector|
 |12-15|4|Partition size (in sectors)|
-
-| Addresses (within MBR sector) | Length (bytes) | Table entry             |
-|---------------|----------------------------|-----------------------------------------|
-| 0x1BE - 0x1CD | 16                     | Primary partition 1 |
-| 0x1CE - 0x1DD | 16                     | Primary partition 2 |
-| 0x1DE - 0x1ED | 16                     | Primary partition 3 |
-| 0x1EE - 0x1FD | 16                     | Primary partition 4 |
-
 
 ## GPT partition table
