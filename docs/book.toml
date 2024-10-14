@@ -1,3 +1,6 @@
 [book]
 title = "Writing an operating system"
 
+[output.html]
+additional-css = ["theme/pagetoc.css"]
+additional-js = ["theme/pagetoc.js"]
