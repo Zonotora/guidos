@@ -9,12 +9,20 @@ SECTOR_LENGTH = 512
 END_OF_FILE = 0xFFFF
 
 
-def shift_uint8_tuple(tup):
+def unpack(buffer):
     s = 0
-    n = len(tup)
+    n = len(buffer)
     for i in range(n):
-        s |= tup[i] << (i * 8)
+        s |= buffer[i] << (i * 8)
     return s
+
+
+def pack(value, n):
+    buffer = [0] * n
+    for i in range(n):
+        buffer[i] = value & 0xFF
+        value = value >> (i * 8)
+    return buffer
 
 
 @dataclass
@@ -62,17 +70,17 @@ partition_fields = [
 
 
 class DirectoryAttr:
-    ATTR_READ_ONLY = 0
-    ATTR_HIDDEN = 1
-    ATTR_SYSTEM = 2
-    ATTR_DIRECTORY = 3
-    ATTR_ARCHIVE = 4
-    ATTR_VOLUME_ID = 5
-    ATTR_LONG_NAME = 6
+    ATTR_READ_ONLY = 0x01
+    ATTR_HIDDEN = 0x02
+    ATTR_SYSTEM = 0x04
+    ATTR_VOLUME_ID = 0x08
+    ATTR_DIRECTORY = 0x10
+    ATTR_ARCHIVE = 0x20
+    ATTR_LONG_NAME = 0x0F
 
 
-directory_fields = [
-    Field("name", 0, 11),
+fat_fields = [
+    Field("name", 0, 11, c_string=True),
     Field("attr", 11, 1),
     Field("nt_res", 12, 1),
     Field("creation_time_tenth", 13, 1),
@@ -97,9 +105,7 @@ class Base:
                 chars = buffer[field.offset : field.offset + field.length]
                 value = "".join([chr(c) for c in chars])
             else:
-                value = shift_uint8_tuple(
-                    buffer[field.offset : field.offset + field.length]
-                )
+                value = unpack(buffer[field.offset : field.offset + field.length])
             setattr(self, field.name, value)
 
     def __str__(self):
@@ -127,6 +133,11 @@ class Partition(Base):
         super().__init__(partition_fields, buffer)
 
 
+class FatEntry(Base):
+    def __init__(self, buffer):
+        super().__init__(fat_fields, buffer)
+
+
 @dataclass
 class Mbr:
     code_area: list[int]
@@ -144,14 +155,14 @@ class Mbr:
             start += 16
             partitions.append(partition)
 
-        signature = shift_uint8_tuple(buffer[start:])
+        signature = unpack(buffer[start:])
         mbr = Mbr(code_area, partitions, signature)
         return mbr
 
 
 class Sector:
     def __init__(self, bytes):
-        self.bytes = bytes
+        self.bytes = list(bytes)
 
     def __str__(self):
         view = "\n".join(
@@ -173,9 +184,8 @@ class Sector:
     def __getitem__(self, index):
         return self.bytes[index]
 
-
-class Inode:
-    pass
+    def __setitem__(self, index, value):
+        self.bytes[index] = value
 
 
 class Fat:
@@ -186,37 +196,33 @@ class Fat:
 
         self.total_sectors = self.bpb.small_sector_count
         self.n_sectors_per_fat = self.bpb.n_sectors_per_fat16
-        self.root_dir_sectors = (
+        self.n_root_dir_sectors = (
             (self.bpb.n_root_entries * 32) + (self.bpb.n_bytes_per_sector - 1)
         ) // self.bpb.n_bytes_per_sector
         self.data_sectors = self.total_sectors - (
             self.bpb.n_reserved_sectors
             + (self.bpb.n_fats * self.n_sectors_per_fat)
-            + self.root_dir_sectors
+            + self.n_root_dir_sectors
         )
 
-        self.root_dir_sectors = (
-            (self.bpb.n_root_entries * 32) + (self.bpb.n_bytes_per_sector - 1)
-        ) // self.bpb.n_bytes_per_sector
         self.first_data_sector = (
             self.bpb.n_reserved_sectors
             + (self.bpb.n_fats * self.n_sectors_per_fat)
-            + self.root_dir_sectors
+            + self.n_root_dir_sectors
             + self.partition.sector
         )
         self.first_fat_sector = self.bpb.n_reserved_sectors + self.partition.sector
         self.n_clusters = self.data_sectors // self.bpb.n_sectors_per_cluster
         # On FAT 12/16 the root directory is at a fixed position immediately after the FAT
-        self.first_root_dir_sector = self.first_data_sector - self.root_dir_sectors
+        self.first_root_dir_sector = self.first_data_sector - self.n_root_dir_sectors
 
     def __str__(self):
         fields = [
             "total_sectors",
             "n_sectors_per_fat",
-            "root_dir_sectors",
+            "n_root_dir_sectors",
             "data_sectors",
             "n_clusters",
-            "root_dir_sectors",
             "first_data_sector",
             "first_fat_sector",
             "first_root_dir_sector",
@@ -246,38 +252,193 @@ class Fat:
         return valid
 
     def read_cluster_value_from_fat(self, cluster):
-        index = self.partition.sector + self.first_fat_sector
-        sector = index + (cluster * 2) // self.bpb.n_bytes_per_sector
+        sector = self.first_fat_sector + (cluster * 2) // self.bpb.n_bytes_per_sector
         offset_within_sector = (cluster * 2) % self.bpb.n_bytes_per_sector
         value = self.sectors[sector][offset_within_sector]
         value |= self.sectors[sector][offset_within_sector + 1] << 8
         return value
 
-    def write_cluster_value_from_fat(self, cluster, value):
-        # Two first entries are reserved
-        cluster = cluster - 2
-        index = self.partition.sector + self.first_fat_sector
-        sector = index + (cluster * 2) // self.bpb.n_bytes_per_sector
+    def write_cluster_value_to_fat(self, cluster, value):
+        sector = self.first_fat_sector + (cluster * 2) // self.bpb.n_bytes_per_sector
         offset_within_sector = (cluster * 2) % self.bpb.n_bytes_per_sector
         self.sectors[sector][offset_within_sector] = value
         self.sectors[sector][offset_within_sector + 1] = value >> 8
+
+    def read_sector(self, sector_index):
+        return self.sectors[sector_index]
+
+    def write_sector(self, sector_index, offset, buffer):
+        data = self.read_sector(sector_index)
+        for i in range(len(buffer)):
+            data[offset + i] = buffer[i]
+        self.sectors[sector_index] = data
 
     def first_block_of_cluster(self, cluster):
         return ((cluster - 2) * self.bpb.n_sectors_per_cluster) + self.first_data_sector
 
     def scan_for_free_cluster(self):
         for cluster in range(self.n_clusters):
-            value = self.get_cluster_value_from_fat(cluster)
+            value = self.read_cluster_value_from_fat(cluster)
             if value == 0x0000:
-                # Allocate 1 cluster
-                self.write_cluster_value_from_fat(cluster, END_OF_FILE)
-                sector_index = self.first_block_of_cluster(cluster)
+                return cluster
 
-    def create_directory(self):
-        pass
+    def scan_for_free_location_in_root(self):
+        sector_index = self.first_root_dir_sector
+        for i in range(self.n_root_dir_sectors):
+            index = sector_index + i
+            sector = self.read_sector(index)
 
-    def create_file(self):
-        pass
+            for j in range(self.bpb.n_bytes_per_sector // 32):
+                offset = j * 32
+                first_cluster_lo = unpack(sector[j + 26 : j + 28])
+                print(first_cluster_lo)
+                if first_cluster_lo == 0:
+                    print(first_cluster_lo, index, offset)
+                    return index, offset
+        assert False, "No more entries"
+
+    def scan_for_free_location_in_cluster(self, cluster):
+        sector_index = self.first_block_of_cluster(cluster)
+        for i in range(self.bpb.n_sectors_per_cluster):
+            index = sector_index + i
+            sector = self.read_sector(index)
+
+            for j in range(self.bpb.n_bytes_per_sector // 32):
+                offset = j * 32
+                first_cluster_lo = unpack(sector[j + 26 : j + 28])
+                if first_cluster_lo == 0:
+                    return index, offset
+        # Need to check FAT table for the cluster to the next cluster.
+        # Otherwise, allocate new cluster for this cluster entry
+        next_cluster = self.read_cluster_value_from_fat(cluster)
+        if next_cluster != END_OF_FILE:
+            return self.scan_for_free_location_in_cluster(next_cluster)
+
+        next_cluster = self.scan_for_free_cluster()
+        self.write_cluster_value_to_fat(cluster, next_cluster)
+        self.write_cluster_value_to_fat(next_cluster, END_OF_FILE),
+
+        return self.scan_for_free_location_in_cluster(next_cluster)
+
+    def encode_entry(self, **kwargs):
+        assert len(kwargs) == len(
+            fat_fields
+        ), f"kwargs: {len(kwargs)} fat_fields: {len(fat_fields)}"
+        buffer = [0] * 32
+        for field in fat_fields:
+            assert field.name in kwargs
+            if field.c_string:
+                buffer_value = [ord(c) for c in kwargs[field.name]]
+                while len(buffer_value) < field.length:
+                    buffer_value.append(0)
+            else:
+                buffer_value = pack(kwargs[field.name], field.length)
+
+            for i in range(field.length):
+                index = field.offset + i
+                buffer[index] = buffer_value[i]
+        return buffer
+
+    def get_directory_entries(self, directory):
+        if directory == "/":
+            buffer = []
+            n = 0
+            sector_index = self.first_root_dir_sector
+            for i in range(self.n_root_dir_sectors):
+                index = sector_index + i
+                sector = self.read_sector(index)
+
+                for j in range(self.bpb.n_bytes_per_sector // 32):
+                    offset = j * 32
+                    first_cluster_lo = unpack(sector[j + 26 : j + 28])
+                    if first_cluster_lo != 0:
+                        buffer.extend(sector[offset : offset + 32])
+                        n += 1
+            return n, buffer
+
+    def this_directory_entry(self, cluster):
+        return self.encode_entry(
+            **{
+                "name": ".",
+                "attr": DirectoryAttr.ATTR_DIRECTORY,
+                "nt_res": 0,
+                "creation_time_tenth": 0x01,
+                "creation_time": 0x02,
+                "creation_date": 0x02,
+                "last_accessed_date": 0x03,
+                "modified_time": 0x04,
+                "modified_date": 0x05,
+                "first_cluster_lo": cluster,
+                "first_cluster_hi": 0,
+                "file_size": 0,
+            }
+        )
+
+    def parent_directory_entry(self, cluster):
+        return self.encode_entry(
+            **{
+                "name": "..",
+                "attr": DirectoryAttr.ATTR_DIRECTORY,
+                "nt_res": 0,
+                "creation_time_tenth": 0x01,
+                "creation_time": 0x02,
+                "creation_date": 0x02,
+                "last_accessed_date": 0x03,
+                "modified_time": 0x04,
+                "modified_date": 0x05,
+                "first_cluster_lo": cluster,
+                "first_cluster_hi": 0,
+                "file_size": 0,
+            }
+        )
+
+    def create_file_or_directory(self, directory, name, attr):
+        free_cluster = self.scan_for_free_cluster()
+        if free_cluster == END_OF_FILE:
+            return
+
+        if name == "/":
+            assert False, "directory exists"
+
+        buffer = self.encode_entry(
+            **{
+                "name": name,
+                "attr": attr,
+                "nt_res": 0,
+                "creation_time_tenth": 0x01,
+                "creation_time": 0x02,
+                "creation_date": 0x02,
+                "last_accessed_date": 0x03,
+                "modified_time": 0x04,
+                "modified_date": 0x05,
+                "first_cluster_lo": free_cluster,
+                "first_cluster_hi": 0,
+                "file_size": 0,
+            }
+        )
+        self.write_cluster_value_to_fat(free_cluster, END_OF_FILE),
+        if directory == "/":
+            sector_index, offset = self.scan_for_free_location_in_root()
+        else:
+
+            parent_cluster = 0
+            # sector_index, offset = self.scan_for_free_location_in_cluster(
+            #     parent_cluster
+            # )
+        self.write_sector(sector_index, offset, buffer)
+
+        if attr & DirectoryAttr.ATTR_DIRECTORY:
+            sector_index = self.first_block_of_cluster(free_cluster)
+            self.write_sector(sector_index, 0, self.this_directory_entry(free_cluster))
+            self.write_sector(
+                sector_index, 32, self.parent_directory_entry(free_cluster)
+            )
+
+    def create_directory(self, directory, name, attr=DirectoryAttr.ATTR_DIRECTORY):
+        self.create_file_or_directory(directory, name, attr)
+
+    def create_file(self, directory, name, attr=DirectoryAttr.ATTR_ARCHIVE):
+        self.create_file_or_directory(directory, name, attr)
 
 
 class Driver:
@@ -289,6 +450,8 @@ class Driver:
             for i in range(len(self.mbr.partitions))
             if self.mbr.partitions[i].sector != 0
         }
+        self.index = 0
+        self.current_dir = "/"
 
     def read(self, device):
         sectors = []
@@ -310,41 +473,41 @@ class Driver:
 
     def parse(self, cmd):
         value = "unknown"
-        if m := re.search(r"sec ([0-9]+)", cmd):
+        if m := re.search(r"set ([0123])", cmd):
+            self.index = int(m.group(1))
+            index = int(m.group(1))
+            if index not in self.fat:
+                value = f"partition {index} is not formatted with fat"
+        elif m := re.search(r"sec ([0-9]+)", cmd):
             index = int(m.group(1))
             if index >= len(self.sectors):
                 value = f"sector {index} does not exist"
             else:
                 value = self.sectors[index]
-        elif m := re.search(r"fat ([0123])", cmd):
-            index = int(m.group(1))
-            if index not in self.fat:
-                value = f"partition {index} is not formatted with fat"
-            else:
-                value = self.fat[index]
+        elif cmd == "fat":
+            value = self.fat[self.index]
         elif m := re.search(r"nonempty ([0123])", cmd):
-            index = int(m.group(1))
-            if index not in self.fat:
-                value = f"partition {index} is not formatted with fat"
-            else:
-                value = self.fat[index].get_nonempty()
+            value = self.fat[self.index].get_nonempty()
         elif cmd == "mbr":
             value = self.mbr
         elif m := re.search(r"bpb ([0123])", cmd):
-            index = int(m.group(1))
-            if index not in self.fat:
-                value = f"partition {index} is not formatted with fat"
-            else:
-                fat = self.fat[index]
-                value = fat.get_bpb()
-        elif m := re.search(r"mkdir (.+)", cmd):
-            pass
+            value = self.fat[self.index].get_bpb()
+        elif m := re.search(r"mkdir ([A-Za-z0-9]+)", cmd):
+            self.fat[self.index].create_directory(self.current_dir, m.group(1))
+            value = ""
         elif m := re.search(r"touch (.+)", cmd):
             pass
         elif m := re.search(r"rm (.+)", cmd):
             value = m.group(1)
         elif cmd == "ls":
-            pass
+            n, entries = self.fat[self.index].get_directory_entries(self.current_dir)
+            names = []
+            print(n)
+            for i in range(n):
+                entry = FatEntry(entries[i * 32 : (i + 1) * 32])
+                print(entry)
+                names.append(entry.name)
+            value = " ".join(names)
         elif cmd == "cat":
             pass
         return value
