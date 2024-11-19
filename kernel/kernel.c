@@ -7,6 +7,7 @@
 void kernel_main() {
   isr_install();
   asm volatile("sti");
+  serial_init();
   clear_screen();
   init_keyboard();
   timer_init();
