@@ -3,6 +3,7 @@
 #include "devices/ata.h"
 #include "drivers/keyboard.h"
 #include "drivers/screen.h"
+#include "drivers/serial.h"
 
 void kernel_main() {
   isr_install();
