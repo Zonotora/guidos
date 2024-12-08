@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Assembly - Writing an operating system</title>
+        <title>Networking - Writing an operating system</title>
 
 
         <!-- Custom HTML head -->
@@ -89,7 +89,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="assembly.html" class="active">Assembly</a></li><li class="chapter-item expanded affix "><a href="stack_heap.html">Stack and Heap</a></li><li class="chapter-item expanded affix "><a href="storage.html">Storage</a></li><li class="chapter-item expanded affix "><a href="requirements.html">Requirements</a></li><li class="chapter-item expanded "><a href="bootloader.html"><strong aria-hidden="true">1.</strong> Bootloader</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="bootloader/segmentation.html"><strong aria-hidden="true">1.1.</strong> Segmentation</a></li><li class="chapter-item expanded "><a href="bootloader/disk.html"><strong aria-hidden="true">1.2.</strong> Disk</a></li><li class="chapter-item expanded "><a href="bootloader/grub.html"><strong aria-hidden="true">1.3.</strong> GRUB</a></li></ol></li><li class="chapter-item expanded "><a href="interrupts.html"><strong aria-hidden="true">2.</strong> Interrupts</a></li><li class="chapter-item expanded "><a href="filesystem.html"><strong aria-hidden="true">3.</strong> Filesystem</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="filesystem/atapio.html"><strong aria-hidden="true">3.1.</strong> ATA PIO</a></li><li class="chapter-item expanded "><a href="filesystem/partition.html"><strong aria-hidden="true">3.2.</strong> Partition</a></li><li class="chapter-item expanded "><a href="filesystem/block_device.html"><strong aria-hidden="true">3.3.</strong> Block device</a></li><li class="chapter-item expanded "><a href="filesystem/fat.html"><strong aria-hidden="true">3.4.</strong> FAT</a></li></ol></li><li class="chapter-item expanded "><a href="threads.html"><strong aria-hidden="true">4.</strong> Threads</a></li><li class="chapter-item expanded "><a href="system_calls.html"><strong aria-hidden="true">5.</strong> System Calls</a></li><li class="chapter-item expanded "><a href="virtual_memory.html"><strong aria-hidden="true">6.</strong> Virtual Memory</a></li><li class="chapter-item expanded "><a href="arm.html"><strong aria-hidden="true">7.</strong> ARM</a></li><li class="chapter-item expanded affix "><a href="references.html">References</a></li><li class="chapter-item expanded affix "><a href="extras.html">Extras</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="requirements.html">Requirements</a></li><li class="chapter-item expanded "><a href="prerequisite.html"><strong aria-hidden="true">1.</strong> Prerequisite</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="prerequisite/assembly.html"><strong aria-hidden="true">1.1.</strong> Assembly</a></li><li class="chapter-item expanded "><a href="prerequisite/stack_heap.html"><strong aria-hidden="true">1.2.</strong> Stack and Heap</a></li><li class="chapter-item expanded "><a href="prerequisite/storage.html"><strong aria-hidden="true">1.3.</strong> Storage</a></li><li class="chapter-item expanded "><a href="prerequisite/linker.html"><strong aria-hidden="true">1.4.</strong> Linker</a></li></ol></li><li class="chapter-item expanded "><a href="bootloader.html"><strong aria-hidden="true">2.</strong> Bootloader</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="bootloader/segmentation.html"><strong aria-hidden="true">2.1.</strong> Segmentation</a></li><li class="chapter-item expanded "><a href="bootloader/disk.html"><strong aria-hidden="true">2.2.</strong> Disk</a></li><li class="chapter-item expanded "><a href="bootloader/grub.html"><strong aria-hidden="true">2.3.</strong> GRUB</a></li></ol></li><li class="chapter-item expanded "><a href="interrupts.html"><strong aria-hidden="true">3.</strong> Interrupts</a></li><li class="chapter-item expanded "><a href="memory.html"><strong aria-hidden="true">4.</strong> Memory</a></li><li class="chapter-item expanded "><a href="filesystem.html"><strong aria-hidden="true">5.</strong> Filesystem</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="filesystem/atapio.html"><strong aria-hidden="true">5.1.</strong> ATA PIO</a></li><li class="chapter-item expanded "><a href="filesystem/partition.html"><strong aria-hidden="true">5.2.</strong> Partition</a></li><li class="chapter-item expanded "><a href="filesystem/block_device.html"><strong aria-hidden="true">5.3.</strong> Block device</a></li><li class="chapter-item expanded "><a href="filesystem/fat.html"><strong aria-hidden="true">5.4.</strong> FAT</a></li></ol></li><li class="chapter-item expanded "><a href="system_calls.html"><strong aria-hidden="true">6.</strong> System Calls</a></li><li class="chapter-item expanded "><a href="threads.html"><strong aria-hidden="true">7.</strong> Threads</a></li><li class="chapter-item expanded "><a href="networking.html" class="active"><strong aria-hidden="true">8.</strong> Networking</a></li><li class="chapter-item expanded "><a href="virtual_memory.html"><strong aria-hidden="true">9.</strong> Virtual Memory</a></li><li class="chapter-item expanded "><a href="arm.html"><strong aria-hidden="true">10.</strong> ARM</a></li><li class="chapter-item expanded affix "><a href="references.html">References</a></li><li class="chapter-item expanded affix "><a href="extras.html">Extras</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -175,19 +175,18 @@
                 <div id="content" class="content">
                     <main>
                         <div class="content-wrap">
-                            <h1 id="assembly"><a class="header" href="#assembly">Assembly</a></h1>
-<p>There are a couple of file extensions used for assembly files: [<code>.a</code>, <code>.s</code>, <code>.S</code>, <code>.asm</code>]</p>
-<p>In x86, there are two separate versions of assembly syntax:</p>
+                            <h1 id="networking"><a class="header" href="#networking">Networking</a></h1>
 <ul>
-<li>AT&amp;T (used by Unix compilers like <code>gcc</code>)</li>
-<li>Intel/NASM (with a couple dialects, like MASM vs. NASM itself).</li>
+<li>https://wiki.qemu.org/Documentation/Networking</li>
+<li>https://apiraino.github.io/qemu-bridge-networking/</li>
+<li>https://www.qemu.org/docs/master/system/devices/net.html</li>
 </ul>
-<p>Intel syntax is dominant in the DOS and Windows world, and AT&amp;T syntax is dominant in the Unix world.</p>
-<p>The <code>.S</code> file extension is appropriate for assembly files with GNU syntax using <code>as</code>, while <code>.asm</code> more often is associated with Intel syntax NASM/YASM, or MASM, source code.</p>
-<div class="table-wrapper"><table><thead><tr><th></th><th>AT&amp;T</th><th>Intel</th></tr></thead><tbody>
-<tr><td>Parameter order</td><td><code>movl $5, %eax</code> <br> Source before the destination</td><td><code>mov eax, 5</code> <br> Destination before source</td></tr>
-</tbody></table>
-</div>
+<h2 id="tcp"><a class="header" href="#tcp">TCP</a></h2>
+<ul>
+<li>https://cseweb.ucsd.edu/classes/fa09/cse124/presentations/TCPlinux_implementation.pdf</li>
+<li>https://www.saminiir.com/lets-code-tcp-ip-stack-1-ethernet-arp/</li>
+</ul>
+
                         </div>
                         <div class="sidetoc">
                             <nav class="pagetoc"></nav>
@@ -196,11 +195,11 @@
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="threads.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="stack_heap.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="virtual_memory.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -210,11 +209,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="threads.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="stack_heap.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="virtual_memory.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

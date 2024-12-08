@@ -163,6 +163,7 @@ The boot record is always placed in the **logical** sector number zero. The firs
 - If the file size is larger than the cluster size, file data is spanning over multiple clusters in the cluster chain.
 
 On entries in the FAT
+- Directory contents (data) are a series of 32 byte directory entries.
 - Value of the entry is the cluster number of the next cluster following this corresponding cluster.
 
 ## Inode
