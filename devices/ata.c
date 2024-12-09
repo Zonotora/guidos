@@ -1,12 +1,15 @@
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
 #include "arch/x86/isr.h"
 #include "arch/x86/ports.h"
 #include "arch/x86/timer.h"
 #include "block.h"
 #include "drivers/screen.h"
+#include "kernel/kprintf.h"
+#include "kernel/trace.h"
 #include "partition.h"
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
 
 #define PORT_DATA(CHANNEL) ((CHANNEL)->port_base + 0)
 #define PORT_ERROR(CHANNEL) ((CHANNEL)->port_base + 1)
@@ -270,12 +273,11 @@ void ata_identify_device(ata_device *device) {
 
   kprint("reading from ");
   kprint(device->name);
+  kprint("\n");
   // Data is ready to be sent. Read 256 16-bit values from the data port
   // and store that information.
   sector_in(device, sector);
 
-  // kprint(sector);
-  kprint("\n");
   uint8_t *serial_number = swap_byte_order_in_string(&sector[10 * 2], 10 * 2);
   sector[20 * 2] = '\0';
   uint8_t *model_number = swap_byte_order_in_string(&sector[27 * 2], 20 * 2);
@@ -285,11 +287,7 @@ void ata_identify_device(ata_device *device) {
   block_t *block = block_register(device, device->name, 0, capacity, read, write);
 
   read_partition_table(block);
-  kprintf("capacity %d\n", capacity);
-  kprint(serial_number);
-  kprint("\n");
-  kprint(model_number);
-  kprint("\n");
+  TRACE("ATA", 1, "capacity: %d, serial_number: %s, model_number: %s", capacity, serial_number, model_number);
 }
 
 static void interrupt_handler(registers_t *regs) {
@@ -299,7 +297,7 @@ static void interrupt_handler(registers_t *regs) {
       continue;
     }
     inb(PORT_STATUS(channel));
-    kprint("ata interrupt\n");
+    TRACE("INTERRUPT", 1, "ata", 0);
   }
 }
 

@@ -1,5 +1,5 @@
 #include "block.h"
-#include "drivers/screen.h"
+#include "kernel/kprintf.h"
 #include <stddef.h>
 
 typedef struct block_array_t {

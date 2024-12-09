@@ -1,8 +1,8 @@
 #include "keyboard.h"
 #include "arch/x86/isr.h"
 #include "arch/x86/ports.h"
-#include "drivers/screen.h"
 #include "kernel/console.h"
+#include "kernel/kprintf.h"
 #include "libc/string.h"
 
 #define SC_MAX 57

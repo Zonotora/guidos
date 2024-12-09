@@ -1,10 +1,22 @@
 #include "../drivers/keyboard.h"
-#include "../drivers/screen.h"
 #include "../libc/mem.h"
 #include "../libc/string.h"
+#include "drivers/screen.h"
+#include "kprintf.h"
 
 #define BUFFER_LEN 256
 char cmd[BUFFER_LEN];
+
+void backspace() {
+  int offset = get_cursor() - 1;
+  if (offset < 0) {
+    offset = 0;
+  }
+  unsigned char row = offset / MAX_COLS;
+  unsigned char col = offset % MAX_COLS;
+  kprint_at(" ", row, col);
+  set_cursor(row, col);
+}
 
 static void parse_cmd() {
   if (strcmp(cmd, "")) {

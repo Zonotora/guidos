@@ -1,19 +1,18 @@
-C_SOURCES = $(wildcard kernel/*.c devices/*.c drivers/*.c arch/**/*.c libc/*.c)
-HEADERS = $(wildcard kernel/*.h devices/*.h drivers/*.h arch/**/*.h libc/*.h)
+C_SOURCES = $(wildcard kernel/*.c devices/*.c drivers/*.c arch/**/*.c libc/*.c fs/*.c fs/**/*.c)
+HEADERS = $(wildcard kernel/*.h devices/*.h drivers/*.h arch/**/*.h libc/*.h fs/*.h fs/**/*.h)
 BIN = $(wildcard *.bin)
 OBJ = ${C_SOURCES:.c=.o arch/x86/interrupt.o}
 
 CLANG = clang -m32 -target -i386-none-eabi
-CFLAGS = -g
+CFLAGS = -g -DDEBUG
 
 .PHONY: hdd floppy grub
 
 hda: image.bin
-	qemu-system-i386 -hda image.bin -hdb ramdisk.img
+	qemu-system-i386 -hda image.bin -hdd ramdisk.img -serial stdio
 
 floppy: image.bin
 	qemu-system-i386 -fda image.bin
-
 
 grub: image.iso
 	qemu-system-i386 -cdrom image.iso
@@ -59,7 +58,9 @@ debug-iso: image.iso kernel.elf
 	nasm $< -f bin -o $@
 
 ramdisk:
-	mkfs.fat -F 16 -C ramdisk.img 10000
+	# dd if=/dev/zero of=ramdisk.img count=30000
+	# use fdisk
+	mkfs.fat --offset 2048 ramdisk.img
 
 clean:
 	find . -name '*.o' | xargs rm -f

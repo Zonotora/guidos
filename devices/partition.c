@@ -1,6 +1,7 @@
 #include "partition.h"
-#include "drivers/screen.h"
-#include "fs/file_system.h"
+#include "fs/fat/file_system.h"
+#include "kernel/kprintf.h"
+#include "kernel/trace.h"
 #include <stdint.h>
 
 typedef struct partition_table_entry_t {
@@ -117,6 +118,7 @@ static const char *type_names[256] = {
 
 void read_partition_table(block_t *block) {
   char buffer[BLOCK_SIZE_SECTOR];
+  char read_buffer[BLOCK_SIZE_SECTOR];
 
   block_read(block, 0, buffer);
   mbr_t *mbr = (mbr_t *)buffer;
@@ -125,8 +127,8 @@ void read_partition_table(block_t *block) {
 
   for (size_t i = 0; i < 4; i++) {
     partition_table_entry_t *p = &mbr->partitions[i];
-    kprintf("table: %d, indicator: %d, type: %s, sector: %d, size: %d\n", i, p->indicator, type_names[p->type],
-            p->sector, p->size);
+    TRACE("PARTITION", 1, "table: %d, indicator: %d, type: %s, sector: %d, size: %d", i, p->indicator,
+          type_names[p->type], p->sector, p->size);
 
     if (p->size == 0) {
       continue;
@@ -135,9 +137,21 @@ void read_partition_table(block_t *block) {
     char name[16];
     snprintf(name, 16, "%s%d", block->name, i);
     block_t *block_partition = block_register(block->device, name, p->sector, p->size, block->read, block->write);
-    // TODO: Hardcoded
-    file_system_init(block_partition, FILE_SYSTEM_FAT16);
+    block_read(block_partition, 0, read_buffer);
+
+    // for (size_t i = 0; i < BLOCK_SIZE_SECTOR; i++) {
+    //   kprintf("%d ", read_buffer[i]);
+    // }
+
+    // for (size_t i = 0; i < BLOCK_SIZE_SECTOR; i++) {
+    //   read_buffer[i] = i;
+    // }
+
+    // block_write(block_partition, 0, read_buffer);
+
+    // TODO: Hardcoded, need to support partitionless disk
+    file_system_init(block_partition, FILE_SYSTEM_FAT);
   }
 
-  kprintf("signature %x\n", mbr->signature);
+  TRACE("PARTITION", 1, "signature %x", mbr->signature);
 }

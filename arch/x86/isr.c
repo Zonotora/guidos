@@ -1,6 +1,6 @@
 #include "isr.h"
-#include "drivers/screen.h"
 #include "idt.h"
+#include "kernel/kprintf.h"
 #include "libc/string.h"
 #include "ports.h"
 
