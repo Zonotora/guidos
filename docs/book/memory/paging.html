@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Extras - Writing an operating system</title>
+        <title>Paging - Writing an operating system</title>
 
 
         <!-- Custom HTML head -->
@@ -12,31 +12,31 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
-        <link rel="icon" href="favicon.svg">
-        <link rel="shortcut icon" href="favicon.png">
-        <link rel="stylesheet" href="css/variables.css">
-        <link rel="stylesheet" href="css/general.css">
-        <link rel="stylesheet" href="css/chrome.css">
-        <link rel="stylesheet" href="css/print.css" media="print">
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
-        <link rel="stylesheet" href="fonts/fonts.css">
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" href="highlight.css">
-        <link rel="stylesheet" href="tomorrow-night.css">
-        <link rel="stylesheet" href="ayu-highlight.css">
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
 
         <!-- Custom theme stylesheets -->
-        <link rel="stylesheet" href="theme/pagetoc.css">
+        <link rel="stylesheet" href="../theme/pagetoc.css">
 
     </head>
     <body class="sidebar-visible no-js">
     <div id="body-container">
         <!-- Provide site root to javascript -->
         <script>
-            var path_to_root = "";
+            var path_to_root = "../";
             var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
         </script>
 
@@ -89,7 +89,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="requirements.html">Requirements</a></li><li class="chapter-item expanded "><a href="prerequisite.html"><strong aria-hidden="true">1.</strong> Prerequisite</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="prerequisite/assembly.html"><strong aria-hidden="true">1.1.</strong> Assembly</a></li><li class="chapter-item expanded "><a href="prerequisite/stack_heap.html"><strong aria-hidden="true">1.2.</strong> Stack and Heap</a></li><li class="chapter-item expanded "><a href="prerequisite/storage.html"><strong aria-hidden="true">1.3.</strong> Storage</a></li><li class="chapter-item expanded "><a href="prerequisite/linker.html"><strong aria-hidden="true">1.4.</strong> Linker</a></li></ol></li><li class="chapter-item expanded "><a href="bootloader.html"><strong aria-hidden="true">2.</strong> Bootloader</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="bootloader/disk.html"><strong aria-hidden="true">2.1.</strong> Disk</a></li><li class="chapter-item expanded "><a href="bootloader/grub.html"><strong aria-hidden="true">2.2.</strong> GRUB</a></li></ol></li><li class="chapter-item expanded "><a href="interrupts.html"><strong aria-hidden="true">3.</strong> Interrupts</a></li><li class="chapter-item expanded "><a href="memory.html"><strong aria-hidden="true">4.</strong> Memory</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="memory/detecting_memory.html"><strong aria-hidden="true">4.1.</strong> Detecting memory</a></li><li class="chapter-item expanded "><a href="memory/segmentation.html"><strong aria-hidden="true">4.2.</strong> Segmentation</a></li><li class="chapter-item expanded "><a href="memory/paging.html"><strong aria-hidden="true">4.3.</strong> Paging</a></li></ol></li><li class="chapter-item expanded "><a href="system_calls.html"><strong aria-hidden="true">5.</strong> System Calls</a></li><li class="chapter-item expanded "><a href="filesystem.html"><strong aria-hidden="true">6.</strong> Filesystem</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="filesystem/atapio.html"><strong aria-hidden="true">6.1.</strong> ATA PIO</a></li><li class="chapter-item expanded "><a href="filesystem/partition.html"><strong aria-hidden="true">6.2.</strong> Partition</a></li><li class="chapter-item expanded "><a href="filesystem/block_device.html"><strong aria-hidden="true">6.3.</strong> Block device</a></li><li class="chapter-item expanded "><a href="filesystem/fat.html"><strong aria-hidden="true">6.4.</strong> FAT</a></li></ol></li><li class="chapter-item expanded "><a href="threads.html"><strong aria-hidden="true">7.</strong> Threads</a></li><li class="chapter-item expanded "><a href="networking.html"><strong aria-hidden="true">8.</strong> Networking</a></li><li class="chapter-item expanded "><a href="arm.html"><strong aria-hidden="true">9.</strong> ARM</a></li><li class="chapter-item expanded affix "><a href="references.html">References</a></li><li class="chapter-item expanded affix "><a href="extras.html" class="active">Extras</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="../requirements.html">Requirements</a></li><li class="chapter-item expanded "><a href="../prerequisite.html"><strong aria-hidden="true">1.</strong> Prerequisite</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../prerequisite/assembly.html"><strong aria-hidden="true">1.1.</strong> Assembly</a></li><li class="chapter-item expanded "><a href="../prerequisite/stack_heap.html"><strong aria-hidden="true">1.2.</strong> Stack and Heap</a></li><li class="chapter-item expanded "><a href="../prerequisite/storage.html"><strong aria-hidden="true">1.3.</strong> Storage</a></li><li class="chapter-item expanded "><a href="../prerequisite/linker.html"><strong aria-hidden="true">1.4.</strong> Linker</a></li></ol></li><li class="chapter-item expanded "><a href="../bootloader.html"><strong aria-hidden="true">2.</strong> Bootloader</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../bootloader/disk.html"><strong aria-hidden="true">2.1.</strong> Disk</a></li><li class="chapter-item expanded "><a href="../bootloader/grub.html"><strong aria-hidden="true">2.2.</strong> GRUB</a></li></ol></li><li class="chapter-item expanded "><a href="../interrupts.html"><strong aria-hidden="true">3.</strong> Interrupts</a></li><li class="chapter-item expanded "><a href="../memory.html"><strong aria-hidden="true">4.</strong> Memory</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../memory/detecting_memory.html"><strong aria-hidden="true">4.1.</strong> Detecting memory</a></li><li class="chapter-item expanded "><a href="../memory/segmentation.html"><strong aria-hidden="true">4.2.</strong> Segmentation</a></li><li class="chapter-item expanded "><a href="../memory/paging.html" class="active"><strong aria-hidden="true">4.3.</strong> Paging</a></li></ol></li><li class="chapter-item expanded "><a href="../system_calls.html"><strong aria-hidden="true">5.</strong> System Calls</a></li><li class="chapter-item expanded "><a href="../filesystem.html"><strong aria-hidden="true">6.</strong> Filesystem</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../filesystem/atapio.html"><strong aria-hidden="true">6.1.</strong> ATA PIO</a></li><li class="chapter-item expanded "><a href="../filesystem/partition.html"><strong aria-hidden="true">6.2.</strong> Partition</a></li><li class="chapter-item expanded "><a href="../filesystem/block_device.html"><strong aria-hidden="true">6.3.</strong> Block device</a></li><li class="chapter-item expanded "><a href="../filesystem/fat.html"><strong aria-hidden="true">6.4.</strong> FAT</a></li></ol></li><li class="chapter-item expanded "><a href="../threads.html"><strong aria-hidden="true">7.</strong> Threads</a></li><li class="chapter-item expanded "><a href="../networking.html"><strong aria-hidden="true">8.</strong> Networking</a></li><li class="chapter-item expanded "><a href="../arm.html"><strong aria-hidden="true">9.</strong> ARM</a></li><li class="chapter-item expanded affix "><a href="../references.html">References</a></li><li class="chapter-item expanded affix "><a href="../extras.html">Extras</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -145,7 +145,7 @@
                     <h1 class="menu-title">Writing an operating system</h1>
 
                     <div class="right-buttons">
-                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
 
@@ -175,19 +175,7 @@
                 <div id="content" class="content">
                     <main>
                         <div class="content-wrap">
-                            <h1 id="extras"><a class="header" href="#extras">Extras</a></h1>
-<h2 id="bootloader"><a class="header" href="#bootloader">Bootloader</a></h2>
-<p>We have defined</p>
-<pre><code class="language-assembly">KERNEL_OFFSET equ 0x1000 ;
-</code></pre>
-<p>and we use it to load the kernel at this address</p>
-<pre><code class="language-assembly">    mov bx, KERNEL_OFFSET       ; Read from disk and store in 0x1000
-</code></pre>
-<p>when loading from disk.</p>
-<p>During linking we are telling the linker to place all executable code at memory address <code>0x1000</code>.
-The linker will ensure that all code references are calculated based on this address.</p>
-<pre><code class="language-Makefile">i386-elf-ld -o $@ -Ttext 0x1000 $^ --oformat binary
-</code></pre>
+                            <h1 id="paging"><a class="header" href="#paging">Paging</a></h1>
 
                         </div>
                         <div class="sidetoc">
@@ -197,10 +185,13 @@ The linker will ensure that all code references are calculated based on this add
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="references.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../memory/segmentation.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
+                            <a rel="next prefetch" href="../system_calls.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -208,10 +199,13 @@ The linker will ensure that all code references are calculated based on this add
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="references.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../memory/segmentation.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
+                    <a rel="next prefetch" href="../system_calls.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
             </nav>
 
         </div>
@@ -240,16 +234,16 @@ The linker will ensure that all code references are calculated based on this add
         </script>
 
 
-        <script src="elasticlunr.min.js"></script>
-        <script src="mark.min.js"></script>
-        <script src="searcher.js"></script>
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
 
-        <script src="clipboard.min.js"></script>
-        <script src="highlight.js"></script>
-        <script src="book.js"></script>
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
 
         <!-- Custom JS scripts -->
-        <script src="theme/pagetoc.js"></script>
+        <script src="../theme/pagetoc.js"></script>
 
 
     </div>

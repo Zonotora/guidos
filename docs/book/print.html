@@ -90,7 +90,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="requirements.html">Requirements</a></li><li class="chapter-item expanded "><a href="prerequisite.html"><strong aria-hidden="true">1.</strong> Prerequisite</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="prerequisite/assembly.html"><strong aria-hidden="true">1.1.</strong> Assembly</a></li><li class="chapter-item expanded "><a href="prerequisite/stack_heap.html"><strong aria-hidden="true">1.2.</strong> Stack and Heap</a></li><li class="chapter-item expanded "><a href="prerequisite/storage.html"><strong aria-hidden="true">1.3.</strong> Storage</a></li><li class="chapter-item expanded "><a href="prerequisite/linker.html"><strong aria-hidden="true">1.4.</strong> Linker</a></li></ol></li><li class="chapter-item expanded "><a href="bootloader.html"><strong aria-hidden="true">2.</strong> Bootloader</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="bootloader/segmentation.html"><strong aria-hidden="true">2.1.</strong> Segmentation</a></li><li class="chapter-item expanded "><a href="bootloader/disk.html"><strong aria-hidden="true">2.2.</strong> Disk</a></li><li class="chapter-item expanded "><a href="bootloader/grub.html"><strong aria-hidden="true">2.3.</strong> GRUB</a></li></ol></li><li class="chapter-item expanded "><a href="interrupts.html"><strong aria-hidden="true">3.</strong> Interrupts</a></li><li class="chapter-item expanded "><a href="memory.html"><strong aria-hidden="true">4.</strong> Memory</a></li><li class="chapter-item expanded "><a href="filesystem.html"><strong aria-hidden="true">5.</strong> Filesystem</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="filesystem/atapio.html"><strong aria-hidden="true">5.1.</strong> ATA PIO</a></li><li class="chapter-item expanded "><a href="filesystem/partition.html"><strong aria-hidden="true">5.2.</strong> Partition</a></li><li class="chapter-item expanded "><a href="filesystem/block_device.html"><strong aria-hidden="true">5.3.</strong> Block device</a></li><li class="chapter-item expanded "><a href="filesystem/fat.html"><strong aria-hidden="true">5.4.</strong> FAT</a></li></ol></li><li class="chapter-item expanded "><a href="system_calls.html"><strong aria-hidden="true">6.</strong> System Calls</a></li><li class="chapter-item expanded "><a href="threads.html"><strong aria-hidden="true">7.</strong> Threads</a></li><li class="chapter-item expanded "><a href="networking.html"><strong aria-hidden="true">8.</strong> Networking</a></li><li class="chapter-item expanded "><a href="virtual_memory.html"><strong aria-hidden="true">9.</strong> Virtual Memory</a></li><li class="chapter-item expanded "><a href="arm.html"><strong aria-hidden="true">10.</strong> ARM</a></li><li class="chapter-item expanded affix "><a href="references.html">References</a></li><li class="chapter-item expanded affix "><a href="extras.html">Extras</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="requirements.html">Requirements</a></li><li class="chapter-item expanded "><a href="prerequisite.html"><strong aria-hidden="true">1.</strong> Prerequisite</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="prerequisite/assembly.html"><strong aria-hidden="true">1.1.</strong> Assembly</a></li><li class="chapter-item expanded "><a href="prerequisite/stack_heap.html"><strong aria-hidden="true">1.2.</strong> Stack and Heap</a></li><li class="chapter-item expanded "><a href="prerequisite/storage.html"><strong aria-hidden="true">1.3.</strong> Storage</a></li><li class="chapter-item expanded "><a href="prerequisite/linker.html"><strong aria-hidden="true">1.4.</strong> Linker</a></li></ol></li><li class="chapter-item expanded "><a href="bootloader.html"><strong aria-hidden="true">2.</strong> Bootloader</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="bootloader/disk.html"><strong aria-hidden="true">2.1.</strong> Disk</a></li><li class="chapter-item expanded "><a href="bootloader/grub.html"><strong aria-hidden="true">2.2.</strong> GRUB</a></li></ol></li><li class="chapter-item expanded "><a href="interrupts.html"><strong aria-hidden="true">3.</strong> Interrupts</a></li><li class="chapter-item expanded "><a href="memory.html"><strong aria-hidden="true">4.</strong> Memory</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="memory/detecting_memory.html"><strong aria-hidden="true">4.1.</strong> Detecting memory</a></li><li class="chapter-item expanded "><a href="memory/segmentation.html"><strong aria-hidden="true">4.2.</strong> Segmentation</a></li><li class="chapter-item expanded "><a href="memory/paging.html"><strong aria-hidden="true">4.3.</strong> Paging</a></li></ol></li><li class="chapter-item expanded "><a href="system_calls.html"><strong aria-hidden="true">5.</strong> System Calls</a></li><li class="chapter-item expanded "><a href="filesystem.html"><strong aria-hidden="true">6.</strong> Filesystem</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="filesystem/atapio.html"><strong aria-hidden="true">6.1.</strong> ATA PIO</a></li><li class="chapter-item expanded "><a href="filesystem/partition.html"><strong aria-hidden="true">6.2.</strong> Partition</a></li><li class="chapter-item expanded "><a href="filesystem/block_device.html"><strong aria-hidden="true">6.3.</strong> Block device</a></li><li class="chapter-item expanded "><a href="filesystem/fat.html"><strong aria-hidden="true">6.4.</strong> FAT</a></li></ol></li><li class="chapter-item expanded "><a href="threads.html"><strong aria-hidden="true">7.</strong> Threads</a></li><li class="chapter-item expanded "><a href="networking.html"><strong aria-hidden="true">8.</strong> Networking</a></li><li class="chapter-item expanded "><a href="arm.html"><strong aria-hidden="true">9.</strong> ARM</a></li><li class="chapter-item expanded affix "><a href="references.html">References</a></li><li class="chapter-item expanded affix "><a href="extras.html">Extras</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -257,16 +257,7 @@
 <p>With a computer running legacy BIOS, the BIOS and the boot loader run in Real mode.
 The 64-bit operating system kernel checks and switches the CPU into Long mode and then starts new kernel-mode threads running 64-bit code.</p>
 <p>With a computer running UEFI, the UEFI firmware (except CSM and legacy Option ROM), the UEFI boot loader and the UEFI operating system kernel all run in Long mode.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="segmentation"><a class="header" href="#segmentation">Segmentation</a></h1>
-<p>There are some special combinations of segment registers and general registers that point to important addresses:</p>
-<div class="table-wrapper"><table><thead><tr><th>Register Pair</th><th>Full Name</th><th>Description</th></tr></thead><tbody>
-<tr><td><code>CS:IP</code></td><td>Code Segment : Instruction Pointer</td><td>Points to the address where the processor will fetch the next byte of code.</td></tr>
-<tr><td><code>SS:SP</code></td><td>Stack Segment : Stack Pointer</td><td>Points to the address of the top of the stack, i.e., the most recently pushed byte.</td></tr>
-<tr><td><code>SS:BP</code></td><td>Stack Segment : Base Pointer</td><td>Points to the address of the top of the stack frame, i.e., the base of the data area in the call stack for the currently active subprogram.</td></tr>
-<tr><td><code>DS:SI</code></td><td>Data Segment : Source Index</td><td>Often used to point to string data that is about to be copied to ES:DI.</td></tr>
-<tr><td><code>ES:DI</code></td><td>Extra Segment : Destination Index</td><td>Typically used to point to the destination for a string copy, as mentioned above.</td></tr>
-</tbody></table>
-</div><div style="break-before: page; page-break-before: always;"></div><h1 id="disk"><a class="header" href="#disk">Disk</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="disk"><a class="header" href="#disk">Disk</a></h1>
 <h2 id="bios-disk-read"><a class="header" href="#bios-disk-read">BIOS disk read</a></h2>
 <p><code>AH = 01</code></p>
 <p>The following status codes represent controller status after last disk operation:</p>
@@ -301,6 +292,26 @@ The 64-bit operating system kernel checks and switches the CPU into Long mode an
 </div><div style="break-before: page; page-break-before: always;"></div><h1 id="grub"><a class="header" href="#grub">GRUB</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="interrupts"><a class="header" href="#interrupts">Interrupts</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="memory"><a class="header" href="#memory">Memory</a></h1>
+<h2 id="higher-half-kernel"><a class="header" href="#higher-half-kernel">Higher Half Kernel</a></h2>
+<p>Linux (among other unix-like kernels) reside at virtual addresses <code>0xC000000 - 0xFFFFFFFF</code>, leaving <code>0x00000000 – 0xBFFFFFFF</code> for user code, data, stacks, libraries and so on. Kernels with this design are said to be in the <strong>higher half</strong>.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="detecting-memory"><a class="header" href="#detecting-memory">Detecting memory</a></h1>
+<p>We can request "low memory" which is the available RAM below 1MB (usually below 640KB) by two BIOS functions (<code>INT 0x12</code> and <code>INT 0x15</code>). Using <code>INT 0x12</code> we get the total number of KBs in the <code>ax</code> register.</p>
+<pre><code class="language-asm">clc        ; clear carry flag.
+int 0x12   ; Request low memory size from BIOS.
+jc .error  ; Jump to error routine if carry flag is set.
+           ; ax = amount of continuous memory in KB
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="segmentation"><a class="header" href="#segmentation">Segmentation</a></h1>
+<p>There are some special combinations of segment registers and general registers that point to important addresses:</p>
+<div class="table-wrapper"><table><thead><tr><th>Register Pair</th><th>Full Name</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>CS:IP</code></td><td>Code Segment : Instruction Pointer</td><td>Points to the address where the processor will fetch the next byte of code.</td></tr>
+<tr><td><code>SS:SP</code></td><td>Stack Segment : Stack Pointer</td><td>Points to the address of the top of the stack, i.e., the most recently pushed byte.</td></tr>
+<tr><td><code>SS:BP</code></td><td>Stack Segment : Base Pointer</td><td>Points to the address of the top of the stack frame, i.e., the base of the data area in the call stack for the currently active subprogram.</td></tr>
+<tr><td><code>DS:SI</code></td><td>Data Segment : Source Index</td><td>Often used to point to string data that is about to be copied to ES:DI.</td></tr>
+<tr><td><code>ES:DI</code></td><td>Extra Segment : Destination Index</td><td>Typically used to point to the destination for a string copy, as mentioned above.</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="paging"><a class="header" href="#paging">Paging</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="system-calls"><a class="header" href="#system-calls">System Calls</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="filesystem"><a class="header" href="#filesystem">Filesystem</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="ata-pio"><a class="header" href="#ata-pio">ATA PIO</a></h1>
 <div class="table-wrapper"><table><thead><tr><th>Word</th><th>Description</th></tr></thead><tbody>
@@ -566,7 +577,6 @@ The 64-bit operating system kernel checks and switches the CPU into Long mode an
 <li><a href="https://wiki.osdev.org/FAT">https://wiki.osdev.org/FAT</a></li>
 <li><a href="http://elm-chan.org/docs/fat_e.html">http://elm-chan.org/docs/fat_e.html</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="system-calls"><a class="header" href="#system-calls">System Calls</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="threads"><a class="header" href="#threads">Threads</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="networking"><a class="header" href="#networking">Networking</a></h1>
 <ul>
@@ -579,7 +589,6 @@ The 64-bit operating system kernel checks and switches the CPU into Long mode an
 <li>https://cseweb.ucsd.edu/classes/fa09/cse124/presentations/TCPlinux_implementation.pdf</li>
 <li>https://www.saminiir.com/lets-code-tcp-ip-stack-1-ethernet-arp/</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="virtual-memory"><a class="header" href="#virtual-memory">Virtual Memory</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="arm"><a class="header" href="#arm">ARM</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="introduction-1"><a class="header" href="#introduction-1">Introduction</a></h1>
 <ol>
