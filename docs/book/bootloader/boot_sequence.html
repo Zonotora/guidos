@@ -1,0 +1,523 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Boot sequence - Writing an operating system</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/pagetoc.css">
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="../requirements.html">Requirements</a></li><li class="chapter-item expanded "><a href="../prerequisite.html"><strong aria-hidden="true">1.</strong> Prerequisite</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../prerequisite/assembly.html"><strong aria-hidden="true">1.1.</strong> Assembly</a></li><li class="chapter-item expanded "><a href="../prerequisite/stack_heap.html"><strong aria-hidden="true">1.2.</strong> Stack and Heap</a></li><li class="chapter-item expanded "><a href="../prerequisite/storage.html"><strong aria-hidden="true">1.3.</strong> Storage</a></li><li class="chapter-item expanded "><a href="../prerequisite/linker.html"><strong aria-hidden="true">1.4.</strong> Linker</a></li><li class="chapter-item expanded "><a href="../prerequisite/x86.html"><strong aria-hidden="true">1.5.</strong> x86</a></li></ol></li><li class="chapter-item expanded "><a href="../bootloader.html"><strong aria-hidden="true">2.</strong> Bootloader</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../bootloader/boot_sequence.html" class="active"><strong aria-hidden="true">2.1.</strong> Boot sequence</a></li><li class="chapter-item expanded "><a href="../bootloader/disk.html"><strong aria-hidden="true">2.2.</strong> Disk</a></li><li class="chapter-item expanded "><a href="../bootloader/grub.html"><strong aria-hidden="true">2.3.</strong> GRUB</a></li></ol></li><li class="chapter-item expanded "><a href="../interrupts.html"><strong aria-hidden="true">3.</strong> Interrupts</a></li><li class="chapter-item expanded "><a href="../memory.html"><strong aria-hidden="true">4.</strong> Memory</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../memory/detecting_memory.html"><strong aria-hidden="true">4.1.</strong> Detecting memory</a></li><li class="chapter-item expanded "><a href="../memory/segmentation.html"><strong aria-hidden="true">4.2.</strong> Segmentation</a></li><li class="chapter-item expanded "><a href="../memory/paging.html"><strong aria-hidden="true">4.3.</strong> Paging</a></li></ol></li><li class="chapter-item expanded "><a href="../system_calls.html"><strong aria-hidden="true">5.</strong> System Calls</a></li><li class="chapter-item expanded "><a href="../filesystem.html"><strong aria-hidden="true">6.</strong> Filesystem</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../filesystem/atapio.html"><strong aria-hidden="true">6.1.</strong> ATA PIO</a></li><li class="chapter-item expanded "><a href="../filesystem/block_device.html"><strong aria-hidden="true">6.2.</strong> Block device</a></li><li class="chapter-item expanded "><a href="../filesystem/fat.html"><strong aria-hidden="true">6.3.</strong> FAT</a></li></ol></li><li class="chapter-item expanded "><a href="../threads.html"><strong aria-hidden="true">7.</strong> Threads</a></li><li class="chapter-item expanded "><a href="../networking.html"><strong aria-hidden="true">8.</strong> Networking</a></li><li class="chapter-item expanded "><a href="../arm.html"><strong aria-hidden="true">9.</strong> ARM</a></li><li class="chapter-item expanded affix "><a href="../references.html">References</a></li><li class="chapter-item expanded affix "><a href="../extras.html">Extras</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Writing an operating system</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <div class="content-wrap">
+                            <h1 id="boot-sequence"><a class="header" href="#boot-sequence">Boot sequence</a></h1>
+<p>When an x86-based computer starts, the computer tries to run a BIOS initialization program. The BIOS reads and transfers the first 512 bytes (sector 0) of a bootable device, e.g., hard disk. This sector is called the <strong>Master Boot Record (MBR)</strong>. The MBR usually contains two components:</p>
+<ol>
+<li>A tiny bootstrapping program, i.e., a programming that starts the operating system.</li>
+<li>A partition table for the disk device.</li>
+</ol>
+<p>However, the BIOS have no idea about any of this, but simply loads the first 512 bytes into memory at <code>0x7C00</code>. If the last two bytes are <code>0x55</code> and <code>0xAA</code> out of the loaded 512 bytes, the BIOS considers it to be valid and jumps to that location to start executing whatever code that is now located there.
+Because the MBR may hold a parition table there are two variants to consider:</p>
+<ol>
+<li>If the MBR is partitionless, i.e., does not have a partition table, the code located should load the next step of the boot process which can be the kernel itself or the next stage in the bootloader sequence.</li>
+<li>If the MBR holds a partition table, the MBR takes a look at the partition table and finds the only partition marked as active and loads the <strong>boot sector</strong> for that partition, and starts to execute that code. It then follows the same flow as (1). The boot sector is the first sector for a partition as opposed to the first sector for the whole disk.</li>
+</ol>
+<p>The bootloader is often divided into different stages as it is often impossible to fit everything you want to do in 512 bytes. It is possible depending on use case, but does not leave much room for special-case handling or useful error messages. So the MBR itself contains the first stage (stage 1) of the bootloader. Due to the tiny size of the MBR, there is not much it can do, but it manages just enough to load another sector from disk that contains additional bootstrap code, e.g., the boot sector of a partition or a hard coded sector you have provided. With the code loaded so far, the bootloader is able to enter stage 2. It proceeds loads all code required to boot the kernel. There are many <a href="https://wiki.osdev.org/Boot_Sequence#Some_methods">variants</a> here, but for example if the kernel is placed in a file system at the boot partition, stage 2 must know enough about this file system to proceed.</p>
+<p>Remember that you can only acccess BIOS and only have access to 640 KiB of RAM in real mode. This implies that if your kernel is bigger than that, you can't load the whole kernel in only real mode! This is unfortunate. The solution is unreal mode! This is not a official processor mode, but rather a technique involving switching between real mode and protected mode in order to access more than 1 MiB while still using the BIOS.</p>
+<ul>
+<li>TODO: memory map</li>
+</ul>
+<p>The bootloader described here assumes a couple of things:</p>
+<ol>
+<li>The kernel is a flat binary, i.e., a binary that dose not retain any structure nor segments. There are no special headers or descriptors that describe where the code and data goes. An alternative would be to use, e.g., the ELF format and have code that can decode that format, jump to, and execture the correct code.</li>
+<li>The size of the binary in terms of sectors is calculated during the build process so that stage 1 of the bootloader knows how many sectors it should load.</li>
+<li>There are two stages of the bootloader. Stage 1 is located within the MBR. It loads stage 2. Stage 2 will make the necessary preparations, load all sectors of the kernel below the 1 MiB mark and jump to the main function of the kernel.</li>
+<li>The kernel is loaded at address <code>0x100000</code> which means that unreal mode must be used.</li>
+</ol>
+<ul>
+<li>TODO: A20 line</li>
+<li>TODO: Memory map</li>
+<li>TODO: GDT (temporary?)</li>
+<li>TODO: Paging</li>
+</ul>
+<h2 id="partition"><a class="header" href="#partition">Partition</a></h2>
+<p>A <strong>partition table</strong> is a table that contains data of the partitions on a disk.</p>
+<div style="text-align: center;"><img src="partition_table.svg"></div>
+<h3 id="mbr-partition-table"><a class="header" href="#mbr-partition-table">MBR partition table</a></h3>
+<p>The <strong>Master Boot Record (MBR)</strong> is always located on the first sector of a hard disk. It contains the partition table for the disk. The partition table comprises 64 bytes in total of the 512-byte sector.</p>
+<table>
+  <thead>
+    <tr>
+      <th colspan="2">Addresses (within MBR sector)</th>
+      <th>Length (bytes)</th>
+      <th>Description</th>
+    </tr>
+    <tr>
+      <th>Decimal</th>
+      <th>Hex</th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0 - 445</td>
+      <td>0x000 - 0x1BD</td>
+      <td>446</td>
+      <td>Code area</td>
+    </tr>
+    <tr>
+      <td>446 - 509</td>
+      <td>0x1BE - 0x1FD</td>
+      <td>64</td>
+      <td>Master partition table</td>
+    </tr>
+    <tr>
+      <td>510 - 511</td>
+      <td>0x1FE - 0x1FF</td>
+      <td>2</td>
+      <td>Boot record signature</td>
+    </tr>
+  </tbody>
+</table>
+<table>
+  <thead>
+    <tr>
+      <th colspan="2">Addresses (within MBR sector)</th>
+      <th>Length (bytes)</th>
+      <th>Table entry</th>
+    </tr>
+    <tr>
+      <th>Decimal</th>
+      <th>Hex</th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>446 - 461</td>
+      <td>0x1BE - 0x1CD</td>
+      <td>16</td>
+      <td>Primary partition 1</td>
+    </tr>
+    <tr>
+      <td>462 - 477</td>
+      <td>0x1CE - 0x1DD</td>
+      <td>16</td>
+      <td>Primary partition 2</td>
+    </tr>
+    <tr>
+      <td>478 - 493</td>
+      <td>0x1DE - 0x1ED</td>
+      <td>16</td>
+      <td>Primary partition 3</td>
+    </tr>
+    <tr>
+      <td>494 - 509</td>
+      <td>0x1EE - 0x1FD</td>
+      <td>16</td>
+      <td>Primary partition 4</td>
+    </tr>
+  </tbody>
+</table>
+<div class="table-wrapper"><table><thead><tr><th>Addresses (within partition table)</th><th>Length (bytes)</th><th>Description</th></tr></thead><tbody>
+<tr><td>0</td><td>1</td><td>Boot indicator (80h = active)</td></tr>
+<tr><td>1-3</td><td>3</td><td>Starting CHS values</td></tr>
+<tr><td>4</td><td>1</td><td>Partition-type descriptor</td></tr>
+<tr><td>5-7</td><td>3</td><td>Ending CHS values</td></tr>
+<tr><td>8-11</td><td>4</td><td>Starting sector</td></tr>
+<tr><td>12-15</td><td>4</td><td>Partition size (in sectors)</td></tr>
+</tbody></table>
+</div>
+<h3 id="gpt-partition-table"><a class="header" href="#gpt-partition-table">GPT partition table</a></h3>
+<h2 id="bios-parameter-block-bpb"><a class="header" href="#bios-parameter-block-bpb">BIOS Parameter Block (BPB)</a></h2>
+<p>The boot record is always placed in the <strong>logical</strong> sector number zero. The first sector of a hard disk is called the Master Boot Record (MBR). In case the storage media is partition, the partition's first sector holds a Volume Boot Record (VBR). The boot record contains code and data mixed together. The <strong>BPB</strong> is data that contains information about how the partition is formatted.</p>
+<table>
+  <thead>
+    <tr>
+      <th colspan="2">Offset (within MBR/VBR sector)</th>
+      <th>Length (in bytes)</th>
+      <th>Description</th>
+    </tr>
+    <tr>
+      <th>Decimal</th>
+      <th>Hex</th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0</td>
+      <td>0x00</td>
+      <td>3</td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>0x03</td>
+      <td>8</td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>11</td>
+      <td>0x0B</td>
+      <td>2</td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>13</td>
+      <td>0x0D</td>
+      <td>1</td>
+      <td>Number of sectors per cluster.</td>
+    </tr>
+    <tr>
+      <td>14</td>
+      <td>0x0E</td>
+      <td>2</td>
+      <td>
+        Number of reserved sectors. The boot record sectors are included in this
+        value.
+      </td>
+    </tr>
+    <tr>
+      <td>16</td>
+      <td>0x10</td>
+      <td>1</td>
+      <td>
+        Number of File Allocation Tables (FAT's) on the storage media.
+      </td>
+    </tr>
+    <tr>
+      <td>17</td>
+      <td>0x11</td>
+      <td>2</td>
+      <td>
+        Number of root directory entries.
+      </td>
+    </tr>
+    <tr>
+      <td>19</td>
+      <td>0x13</td>
+      <td>2</td>
+      <td>
+        The total sectors in the logical volume. If this value is 0, it means
+        there are more than 65535 sectors in the volume, and the actual count is
+        stored in the Large Sector Count entry at 0x20.
+      </td>
+    </tr>
+    <tr>
+      <td>21</td>
+      <td>0x15</td>
+      <td>1</td>
+      <td>
+        Media descriptor type. See
+        <a
+          rel="nofollow"
+          class="external text"
+          href="https://en.wikipedia.org/wiki/Design_of_the_FAT_file_system#BPB20_OFS_0Ah"
+          >this</a
+        >.
+      </td>
+    </tr>
+    <tr>
+      <td>22</td>
+      <td>0x16</td>
+      <td>2</td>
+      <td>Number of sectors per FAT. FAT12/FAT16 only.</td>
+    </tr>
+    <tr>
+      <td>24</td>
+      <td>0x18</td>
+      <td>2</td>
+      <td>Number of sectors per track.</td>
+    </tr>
+    <tr>
+      <td>26</td>
+      <td>0x1A</td>
+      <td>2</td>
+      <td>Number of heads or sides on the storage media.</td>
+    </tr>
+    <tr>
+      <td>28</td>
+      <td>0x1C</td>
+      <td>4</td>
+      <td>
+        Number of hidden sectors. (i.e. the LBA of the beginning of the
+        partition.)
+      </td>
+    </tr>
+    <tr>
+      <td>32</td>
+      <td>0x20</td>
+      <td>4</td>
+      <td>
+        Large sector count. This field is set if there are more than 65535
+        sectors in the volume, resulting in a value which does not fit in the
+        <i>Number of Sectors</i> entry at 0x13.
+      </td>
+    </tr>
+  </tbody>
+</table>
+<ul>
+<li>
+<p>https://manybutfinite.com/post/how-computers-boot-up/</p>
+</li>
+<li>
+<p>https://en.wikipedia.org/wiki/Unreal_mode</p>
+</li>
+<li>
+<p>https://wiki.osdev.org/Memory_Map_(x86)</p>
+</li>
+<li>
+<p>https://wiki.osdev.org/A20_Line</p>
+</li>
+<li>
+<p>https://en.wikipedia.org/wiki/A20_line</p>
+</li>
+<li>
+<p>https://www.pixelbeat.org/docs/disk/</p>
+</li>
+</ul>
+
+                        </div>
+                        <div class="sidetoc">
+                            <nav class="pagetoc"></nav>
+                        </div>
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../bootloader.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../bootloader/disk.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../bootloader.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../bootloader/disk.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+        <!-- Livereload script (if served using the cli tool) -->
+        <script>
+            const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsAddress = wsProtocol + "//" + location.host + "/" + "__livereload";
+            const socket = new WebSocket(wsAddress);
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/pagetoc.js"></script>
+
+
+    </div>
+    </body>
+</html>

@@ -1,37 +1,44 @@
 # Bootloader
 
-## Execution mode
+The bootloader is the program that brings your operating system to life.
+So it needs to bring the kernel into memory somehow. Before transfering control to the kernel, it would be great to setup an environment that the kernel likes, e.g., [protected mode]().
 
-The modes in which x86 code can be executed in are:
+The bootloader runs in [real mode](). Because of this, it has easy access to the BIOS.
 
-- `Real mode (16-bit)`
 
-    - Computers that **use** BIOS start up in this mode.
-    - 20-bit segmented memory address space (meaning that only 1 MB of memory can be addressed— actually since 80286 a little more through HMA)
-    - Direct software access to peripheral hardware
-    - No concept of memory protection or multitasking at the hardware level.
 
-- `Protected mode (16-bit and 32-bit)`
 
-    - Expands addressable physical memory to 16 MB and addressable virtual memory to 1 GB.
-    - Provides privilege levels and protected memory, which prevents programs from corrupting one another.
-    - 16-bit protected mode (used during the end of the DOS era) used a complex, multi-segmented memory model.
-    - 32-bit protected mode uses a simple, flat memory model.
 
-- `Long mode (64-bit)`
 
-    - Mostly an extension of the 32-bit (protected mode) instruction set, but unlike the 16–to–32-bit transition, many instructions were dropped in the 64-bit mode. Pioneered by AMD.
 
-- `Virtual 8086 mode (16-bit)`
+Checklist:
 
-    - A special hybrid operating mode that allows real mode programs and operating systems to run while under the control of a protected mode supervisor operating system
+1. Setup 16-bit segment registers and stack
+2. Print startup message
+3. Check presence of PCI, CPUID, MSRs
+4. Enable and confirm enabled A20 line
+5. Load GDTR
+6. Inform BIOS of target processor mode
+7. Get memory map from BIOS
+8. Locate kernel in filesystem
+9. Allocate memory to load kernel image
+10. Load kernel image into buffer
+11. Enable graphics mode
+12. Check kernel image ELF headers
+13. Enable long mode, if 64-bit
+14. Allocate and map memory for kernel segments
+15. Setup stack
+16. Setup COM serial output port
+17. Setup IDT
+18. Disable PIC
+19. Check presence of CPU features (NX, SMEP, x87, PCID, global pages, TCE, WP, MMX, SSE, SYSCALL), and enable them
+20. Assign a PAT to write combining
+21. Setup FS/GS base
+22. Load IDTR
+23. Enable APIC and setup using information in ACPI tables
+24. Setup GDT and TSS
 
-- `System Management Mode (16-bit)`
 
-    - Handles system-wide functions like power management, system hardware control, and proprietary OEM designed code.
-    - It is intended for use only by system firmware.
-    - All normal execution, including the operating system, is suspended.
-    - An alternate software system (which usually resides in the computer's firmware, or a hardware-assisted debugger) is then executed with high privileges.
 
 ## BIOS vs UEFI
 
