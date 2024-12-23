@@ -66,10 +66,10 @@ stage1_start:
     mov bx, MSG_REAL_MODE
     call print
     mov bx, STAGE2_OFFSET       ; Read from disk and store in 0x500
-    mov dh, 1                   ; Load 1 sector
+    mov dh, [N_STAGE2_SECTORS]  ; Load 1 sector
     mov dl, [BOOT_DRIVE]
     call disk_load
-    mov ax, [N_SECTORS]
+    mov ax, [N_KERNEL_SECTORS]
     jmp STAGE2_OFFSET
 
 
@@ -188,8 +188,9 @@ BOOT_DRIVE db 0
 MSG_REAL_MODE db "Started in 16-bit Real Mode", 0
 DISK_ERROR db "Disk read error", 0
 SECTORS_ERROR db "Incorrect number of sectors read", 0
-times 444 - ($-$$) db 0
-N_SECTORS dw 0xabcd
+times 442 - ($-$$) db 0
+N_STAGE2_SECTORS dw 0xdead
+N_KERNEL_SECTORS dw 0xbeef
 
 times 510 - ($-$$) db 0
 dw 0xaa55

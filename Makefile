@@ -27,9 +27,9 @@ image.iso: arch/x86/boot/multiboot/loader.o ${OBJ}
 image.bin: arch/x86/boot/stage1.bin arch/x86/boot/stage2.bin kernel.bin
 	cat $^ > image.bin
 
-arch/x86/boot/stage1.bin: arch/x86/boot/stage1.asm kernel.bin
+arch/x86/boot/stage1.bin: arch/x86/boot/stage1.asm arch/x86/boot/stage2.bin kernel.bin
 	nasm $< -f bin -o $@
-	python3 scripts/sectors.py kernel.bin $@
+	python3 scripts/sectors.py --stage1 arch/x86/boot/stage1.bin --stage2 arch/x86/boot/stage2.bin --kernel kernel.bin
 
 kernel.bin: arch/x86/boot/kernel_entry.o ${OBJ}
 	i386-elf-ld -o $@ -Ttext 0x1000 $^ --oformat binary
