@@ -24,9 +24,12 @@ image.iso: arch/x86/boot/multiboot/loader.o ${OBJ}
 	cp image.bin isodir/boot/image.bin
 	grub-mkrescue -o image.iso isodir
 
-image.bin: arch/x86/boot/loader.bin kernel.bin
+image.bin: arch/x86/boot/stage1.bin arch/x86/boot/stage2.bin kernel.bin
 	cat $^ > image.bin
-	truncate --size=26112 image.bin
+
+arch/x86/boot/stage1.bin: arch/x86/boot/stage1.asm kernel.bin
+	nasm $< -f bin -o $@
+	python3 scripts/sectors.py kernel.bin $@
 
 kernel.bin: arch/x86/boot/kernel_entry.o ${OBJ}
 	i386-elf-ld -o $@ -Ttext 0x1000 $^ --oformat binary
@@ -35,11 +38,15 @@ kernel.elf: arch/x86/boot/kernel_entry.o ${OBJ}
 	i386-elf-ld -o $@ -Ttext 0x1000 $^
 
 debug: image.bin kernel.elf
-	qemu-system-i386 -fda image.bin -S -s &
+	qemu-system-i386 -hda image.bin -S -s &
 	gdb -ex "target remote localhost:1234" \
+			-ix commands.txt \
 			-ex "symbol-file kernel.elf" \
-			-ex "tui layout src" \
+			-ex "b *0x7c00" \
+			-ex "b *0x500" \
+
 			-ex "b kernel_main" \
+	# -ex "tui layout src" \
 
 debug-iso: image.iso kernel.elf
 	qemu-system-i386 -cdrom image.iso -S -s &

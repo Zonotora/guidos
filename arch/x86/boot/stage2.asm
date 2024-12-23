@@ -1,14 +1,10 @@
 ; --------------------------------------------------------------------------------
 ; Kernel loader
 ; --------------------------------------------------------------------------------
-
-; The ORG instruction is used to provide a "hint" to the assembler and the linker.
-; It allows you to specify the base address of the section of the file.
-[org 0x7c00]
-
 ; This code should be stored in the first sector of a hard disk. The BIOS
 ; will load this code at the physical address 0x7c00-0x7e00 (512 bytes) and
 ; jump to the beginning of it (in real mode).
+[org 0x500]
 
 ; --------------------------------------------------------------------------------
 ; Using 16-bit real mode
@@ -19,14 +15,8 @@
 ; --------------------------------------------------------------------------------
 loader_start:
     mov [BOOT_DRIVE], dl        ; Remember that the BIOS sets us the boot drive in 'dl' on boot
-    mov bp, 0x9000
-    mov sp, bp
-    mov bx, MSG_REAL_MODE
-    call print
-    mov bx, KERNEL_OFFSET       ; Read from disk and store in 0x1000
-    mov dh, 50
-    mov dl, [BOOT_DRIVE]
-    call disk_load
+    mov [N_SECTORS], ax         ;
+    call disk_load_kernel
 switch_to_pm:
     cli                         ; 1. disable interrupts
     lgdt [gdt_descriptor]       ; 2. load the GDT descriptor
@@ -58,48 +48,101 @@ done:
 ; --------------------------------------------------------------------------------
 ; Disk loader
 ; --------------------------------------------------------------------------------
-; The BIOS passes in the drive that the loader was read from. The boot drive is
-; stored in the 'dl' register. Floppy drives are numbered 0x00, 0x01, ... and hard
-; drives are numbered 0x80, 0x81, ...
-
-; load 'dh' sectors from drive 'dl' into ES:BX
-; reading from disk requires setting specific values in all registers
-; so we will overwrite our input parameters from 'dx'. Let's save it
-; to the stack for later use.
-
-; 0x01 is our boot sector, 0x02 is the first 'available' sector
-
-; dl <- drive number. Our caller sets it as a parameter and gets it from BIOS
-; (0 = floppy, 1 = floppy2, 0x80 = hdd, 0x81 = hdd2)
-
-; [es:bx] <- pointer to buffer where the data will be stored
-; caller sets it up for us, and it is actually the standard location for int 13h
-disk_load:
+disk_load_kernel:
     pusha
-    push dx
-    mov ah, 0x02                ; ah <- int 0x13 function. 0x02 = 'read'
-    mov al, dh                  ; al <- number of sectors to read (0x01 .. 0x80)
-    mov cl, 0x02                ; cl <- sector (0x01 .. 0x11)
-    mov ch, 0x00                ; ch <- cylinder (0x0 .. 0x3FF, upper 2 bits in 'cl')
-    mov dh, 0x00                ; dh <- head number (0x0 .. 0xF)
-    int 0x13                    ; BIOS interrupt
+    mov ax, KERNEL_OFFSET       ; Read from disk and store in 0x1000
+    mov es, ax
+    mov dl, [BOOT_DRIVE]
+    mov cx, [N_SECTORS]
+    mov ebx, 2
+    sub ebx, 127
+disk_loop_start:
+    mov ax, cx
+    cmp ax, 127
+    jg disk_ge
+disk_leq:
+    sub cx, cx
+    jmp disk_main
+disk_ge:
+    mov ax, 127
+    sub cx, 127
+disk_main:
+    add ebx, 127
+    push bp
+    mov bp, sp
+    push 0                      ; LBA sector number [48:63]
+    push 0                      ; LBA sector number [32:47]
+    push ebx                    ; LBA sector number [00:31]
+    push 0                      ; Buffer offset
+    push es                     ; Buffer segement
+    push ax                     ; Number of sectors
+    push 0x1000                 ; Size of packet
+    mov ah, 0x42                ; Extended read (LBA instead of CHS)
+    mov si, sp                  ; DS:SI -> packet
+    int 0x13
     jc disk_error               ; if error (stored in the carry bit)
-    pop dx
-    cmp al, dh                  ; BIOS also sets 'al' to the ; of sectors read. Compare it.
+    cmp ah, 0                  ; BIOS also sets 'al' to the ; of sectors read. Compare it.
     jne sectors_error
+    mov sp, bp
+    pop bp
+    mov ax, cx
+    cmp ax, 0
+    jne disk_loop_start
     popa
     ret
 disk_error:
     mov bx, DISK_ERROR
     call print
     mov dh, ah                  ; ah = error code, dl = disk drive that dropped the error
-    ; call print_hex ; check out the code at http://stanislavs.org/helppc/int_13-1.html
+    call print_hex ; check out the code at http://stanislavs.org/helppc/int_13-1.html
     jmp disk_loop
 sectors_error:
     mov bx, SECTORS_ERROR
     call print
 disk_loop:
     jmp $
+
+; --------------------------------------------------------------------------------
+; Print hex
+; --------------------------------------------------------------------------------
+; receiving the data in 'dx'
+; For the examples we'll assume that we're called with dx=0x1234
+print_hex:
+    pusha
+    mov cx, 0 ; our index variable
+; Strategy: get the last char of 'dx', then convert to ASCII
+; Numeric ASCII values: '0' (ASCII 0x30) to '9' (0x39), so just add 0x30 to byte N.
+; For alphabetic characters A-F: 'A' (ASCII 0x41) to 'F' (0x46) we'll add 0x40
+; Then, move the ASCII byte to the correct position on the resulting string
+hex_loop:
+    cmp cx, 4 ; loop 4 times
+    je end
+    ; 1. convert last char of 'dx' to ascii
+    mov ax, dx ; we will use 'ax' as our working register
+    and ax, 0x000f ; 0x1234 -> 0x0004 by masking first three to zeros
+    add al, 0x30 ; add 0x30 to N to convert it to ASCII "N"
+    cmp al, 0x39 ; if > 9, add extra 8 to represent 'A' to 'F'
+    jle step2
+    add al, 7 ; 'A' is ASCII 65 instead of 58, so 65-58=7
+step2:
+    ; 2. get the correct position of the string to place our ASCII char
+    ; bx <- base address + string length - index of char
+    mov bx, HEX_OUT + 5 ; base + length
+    sub bx, cx  ; our index variable
+    mov [bx], al ; copy the ASCII char on 'al' to the position pointed by 'bx'
+    ror dx, 4 ; 0x1234 -> 0x4123 -> 0x3412 -> 0x2341 -> 0x1234
+    ; increment index and loop
+    add cx, 1
+    jmp hex_loop
+end:
+    ; prepare the parameter and call the function
+    ; remember that print receives parameters in 'bx'
+    mov bx, HEX_OUT
+    call print
+    popa
+    ret
+HEX_OUT:
+    db '0x0000',0 ; reserve memory for our new string
 
 ; --------------------------------------------------------------------------------
 ; GDT
@@ -186,8 +229,8 @@ WHITE_ON_BLACK equ 0x0f
 
 ; It is a good idea to store it in memory because 'dl' may get overwritten
 BOOT_DRIVE db 0
+N_SECTORS dw 0
 ; Strings
-MSG_REAL_MODE db "Started in 16-bit Real Mode", 0
 MSG_PROT_MODE db "Landed in 32-bit Protected Mode", 0
 DISK_ERROR db "Disk read error", 0
 SECTORS_ERROR db "Incorrect number of sectors read", 0
