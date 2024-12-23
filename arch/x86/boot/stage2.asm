@@ -6,6 +6,12 @@
 ; jump to the beginning of it (in real mode).
 [org 0x500]
 
+MMAP_ENTRIES equ 0x1000
+KERNEL_OFFSET equ 0x4000 ;
+VIDEO_MEMORY equ 0xb8000
+; The color byte for each character
+WHITE_ON_BLACK equ 0x0f
+
 ; --------------------------------------------------------------------------------
 ; Using 16-bit real mode
 ; --------------------------------------------------------------------------------
@@ -15,9 +21,10 @@
 ; --------------------------------------------------------------------------------
 loader_start:
     mov [BOOT_DRIVE], dl        ; Remember that the BIOS sets us the boot drive in 'dl' on boot
-    mov [N_SECTORS], ax         ;
+    mov [N_STAGE2_SECTORS], cx         ;
+    mov [N_KERNEL_SECTORS], ax         ;
+    call detect_ram
     call disk_load_kernel
-switch_to_pm:
     cli                         ; 1. disable interrupts
     lgdt [gdt_descriptor]       ; 2. load the GDT descriptor
     mov eax, cr0
@@ -46,6 +53,119 @@ done:
     ret                         ; Return to the caller
 
 ; --------------------------------------------------------------------------------
+; Detect RAM using INT 0x15, EAX = 0xe820
+; --------------------------------------------------------------------------------
+; This function is available on all PCs built since 2002, and on most existing PCs
+; before then. It is the only BIOS function that can detect memory areas above 4G.
+; This functions returns an unsorted list that may contain unused entries and may
+; return overlapping areas... Each list entry is stored in memory at ES:DI and you
+; have to increment DI yourself. The format of an entry is the following:
+; +--------------+--------+------+
+; | Base address | Length | Type |
+; +--------------+--------+------+
+; |          8 B |    8 B |  4 B |
+; +--------------+--------+------+
+;
+; In total 64 + 64 + 32 = 160 B. The type has the following format:
+; +------+---------------------+
+; | Type | Description         |
+; +------+---------------------+
+; |    1 | Usable (normal) RAM |
+; +------+---------------------+
+; |    2 | Unusable (reserved) |
+; +------+---------------------+
+; |    3 | ACPI reclaimable    |
+; +------+---------------------+
+; |    4 | ACPI NVS            |
+; +------+---------------------+
+; |    5 | Bad                 |
+; +------+---------------------+
+;
+; There is a ACPI 3.0 version which has one extra 4 bytes like so:
+; +--------+--------------+-----------+
+; | Ignore | Non-volatile | Undefined |
+; +--------+--------------+-----------+
+; |  Bit 0 |        Bit 1 |   30 bits |
+; +--------+--------------+-----------+
+;
+; Idea:
+; First call to INT 0x15, EAX = 0xe820:
+; 1. Point ES:DI to the destination buffer for the list, e.g., 0x1000.
+; 2. Clear EBX.
+; 3. Set EDX to the magic number 0x534d4150.
+; 4. Set EAX to 0xe820 (the upper 16 bits to 0).
+; 5. Set ECX to 24.
+; 6. Invoke INT 0x15.
+;
+; If the call was successful, EAX will be set to the magic number and the carry
+; flag will be clear. EBX will be set to some non-zero value that should be
+; preserved for the next invocation of INT 0x15. CL will contain the number of
+; bytes stored at ES:DI.
+;
+; Subsequent calls to INT 0x15, EAX = 0xe820:
+; 1. Increment DI by your list entry size (e.g., 24 B).
+; 2. Reset EAX to 0xe820.
+; 3. Reset ECX to 24.
+;
+; When you reach the end of the list, EBX may reset to 0 or the invocation will
+; return with the CARRY set when you try to access the next (invalid) entry.
+;
+; Implementation details:
+; 1. Wait with more complex operations like (sorting, merging) until we have
+;    entered the kernel.
+; 2. Unlisted regions are treated as Type 2.
+; 3. Types 2, 4 and 5 are avoided.
+detect_ram:
+    pusha
+    mov ax, MMAP_ENTRIES
+    add ax, 4
+    mov di, ax
+    sub ebx, ebx
+    sub bp, bp
+    mov edx, 0x0534d4150
+    mov eax, 0x0000e820
+    mov [es:di + 20], dword 1
+    mov ecx, 24
+    int 0x15
+    jc detect_ram_failed
+    cmp eax, 0x0534d4150
+    jne detect_ram_failed
+    cmp ebx, 0              ; test ebx, ebx
+    je detect_ram_failed
+    jmp detect_ram_main2
+detect_ram_main:
+    mov edx, 0x0534d4150
+    mov eax, 0x0000e820
+    mov [es:di + 20], dword 1
+    mov ecx, 24
+    int 0x15
+    jc detect_ram_end
+detect_ram_main2:
+    jcxz detect_ram_skip
+    cmp cl, 20
+    jbe detect_ram_check_length
+    cmp byte [es:di + 20], 1
+    je detect_ram_skip
+detect_ram_check_length:
+    mov ecx, [es:di + 8]
+    or ecx, [es:di + 12]
+    jz detect_ram_skip
+    add di, 24
+    inc bp
+detect_ram_skip:
+    cmp ebx, 0
+    jne detect_ram_main
+detect_ram_end:
+    mov [es:MMAP_ENTRIES], bp
+    popa
+    clc
+    ret
+detect_ram_failed:
+    popa
+    stc
+    ret
+
+; --------------------------------------------------------------------------------
 ; Disk loader
 ; --------------------------------------------------------------------------------
 disk_load_kernel:
@@ -53,8 +173,10 @@ disk_load_kernel:
     mov ax, KERNEL_OFFSET       ; Read from disk and store in 0x1000
     mov es, ax
     mov dl, [BOOT_DRIVE]
-    mov cx, [N_SECTORS]
-    mov ebx, 2
+    sub ebx, ebx
+    mov bx, [N_STAGE2_SECTORS]
+    add ebx, 1
+    mov cx, [N_KERNEL_SECTORS]
     sub ebx, 127
 disk_loop_start:
     mov ax, cx
@@ -220,21 +342,17 @@ pm:
     jmp $                       ; Stay here when the kernel returns control to us (if ever)
 
 
-KERNEL_OFFSET equ 0x1000 ;
 CODE_SEG equ gdt_code - gdt_start
 DATA_SEG equ gdt_data - gdt_start
-VIDEO_MEMORY equ 0xb8000
-; The color byte for each character
-WHITE_ON_BLACK equ 0x0f
 
 ; It is a good idea to store it in memory because 'dl' may get overwritten
 BOOT_DRIVE db 0
-N_SECTORS dw 0
+N_STAGE2_SECTORS dw 0
+N_KERNEL_SECTORS dw 0
 ; Strings
 MSG_PROT_MODE db "Landed in 32-bit Protected Mode", 0
 DISK_ERROR db "Disk read error", 0
 SECTORS_ERROR db "Incorrect number of sectors read", 0
 
 ; padding
-times 510 - ($-$$) db 0
-dw 0xaa55
+times (512 * 2) - ($-$$) db 0

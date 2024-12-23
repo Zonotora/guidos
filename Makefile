@@ -32,10 +32,10 @@ arch/x86/boot/stage1.bin: arch/x86/boot/stage1.asm arch/x86/boot/stage2.bin kern
 	python3 scripts/sectors.py --stage1 arch/x86/boot/stage1.bin --stage2 arch/x86/boot/stage2.bin --kernel kernel.bin
 
 kernel.bin: arch/x86/boot/kernel_entry.o ${OBJ}
-	i386-elf-ld -o $@ -Ttext 0x1000 $^ --oformat binary
+	i386-elf-ld -o $@ -Ttext 0x4000 $^ --oformat binary
 
 kernel.elf: arch/x86/boot/kernel_entry.o ${OBJ}
-	i386-elf-ld -o $@ -Ttext 0x1000 $^
+	i386-elf-ld -o $@ -Ttext 0x4000 $^
 
 debug: image.bin kernel.elf
 	qemu-system-i386 -hda image.bin -S -s &

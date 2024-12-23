@@ -69,6 +69,7 @@ stage1_start:
     mov dh, [N_STAGE2_SECTORS]  ; Load 1 sector
     mov dl, [BOOT_DRIVE]
     call disk_load
+    mov cx, [N_STAGE2_SECTORS]
     mov ax, [N_KERNEL_SECTORS]
     jmp STAGE2_OFFSET
 
