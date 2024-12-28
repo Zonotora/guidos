@@ -130,11 +130,17 @@ print:
 start:
     mov al, [bx]                ; 'bx' is the base address for the string
     cmp al, 0
-    je done                     ; Jump to done if 'al' is zero
+    je newline                  ; Jump to newline if 'al' is zero
     mov ah, 0x0e                ; The part where we print with the BIOS help
     int 0x10                    ; 'al' already contains the char
-    add bx, 1                   ; increment pointer and do next loop
+    add bx, 1                   ; Increment pointer and do next loop
     jmp start                   ; Jump to start
+newline:
+    mov ah, 0x0e
+    mov al, 0x0a                ; Newline character
+    int 0x10
+    mov al, 0x0d                ; Carriage return
+    int 0x10
 done:
     popa                        ; Restore all register from the stack
     ret                         ; Return to the caller

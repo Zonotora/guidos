@@ -1,9 +1,6 @@
 ; --------------------------------------------------------------------------------
 ; Kernel loader
 ; --------------------------------------------------------------------------------
-; This code should be stored in the first sector of a hard disk. The BIOS
-; will load this code at the physical address 0x7c00-0x7e00 (512 bytes) and
-; jump to the beginning of it (in real mode).
 [org 0x500]
 
 MMAP_ENTRIES equ 0x1000
@@ -21,8 +18,15 @@ WHITE_ON_BLACK equ 0x0f
 ; --------------------------------------------------------------------------------
 loader_start:
     mov [BOOT_DRIVE], dl        ; Remember that the BIOS sets us the boot drive in 'dl' on boot
-    mov [N_STAGE2_SECTORS], cx         ;
-    mov [N_KERNEL_SECTORS], ax         ;
+    mov [N_STAGE2_SECTORS], cx
+    mov [N_KERNEL_SECTORS], ax
+    call check_a20              ; If A20 is enabled ax = 1, otherwise ax = 0
+    cmp ax, 1
+    je loader_continue
+    mov bx, A20_NOT_ACTIVATED
+    call print
+    jmp $                       ; If A20 is not activated, halt
+loader_continue:
     call detect_ram
     call disk_load_kernel
     cli                         ; 1. disable interrupts
@@ -35,26 +39,84 @@ loader_start:
 ; --------------------------------------------------------------------------------
 ; print
 ; --------------------------------------------------------------------------------
-; keep this in mind:
 ; while (string[i] != 0) { print string[i]; i++ }
-; the comparison for string end (null byte)
+; The comparison for string end (null byte)
 print:
     pusha                       ; Push all registers to the stack
 start:
     mov al, [bx]                ; 'bx' is the base address for the string
     cmp al, 0
-    je done                     ; Jump to done if 'al' is zero
+    je newline                  ; Jump to newline if 'al' is zero
     mov ah, 0x0e                ; The part where we print with the BIOS help
     int 0x10                    ; 'al' already contains the char
-    add bx, 1                   ; increment pointer and do next loop
+    add bx, 1                   ; Increment pointer and do next loop
     jmp start                   ; Jump to start
+newline:
+    mov ah, 0x0e
+    mov al, 0x0a                ; Newline character
+    int 0x10
+    mov al, 0x0d                ; Carriage return
+    int 0x10
 done:
     popa                        ; Restore all register from the stack
     ret                         ; Return to the caller
 
 ; --------------------------------------------------------------------------------
+; Check if the A20 line is activated
+; --------------------------------------------------------------------------------
+; See https://wiki.osdev.org/A20_Line for more details.
+;
+; The A20 line is the physical representation of the 21st bit of any memory address.
+; The A20 line was disabled by default in early systems.
+;
+; To check if the A20 line is enabled, we try to write to the memory address 0x1000
+; If the same address but 1 MiB higher (0x101000) has the same value after write,
+; we know that the A20 line is disabled as we get a wrap around.
+check_a20:
+    pushf
+    push ds
+    push es
+    push di
+    push si
+    sub ax, ax                  ; ax = 0
+    mov es, ax                  ; [es:di] = 0:0
+
+    not ax                      ; ax = 0xffff
+    mov ds, ax                  ; [ds:si] = 0xffff:0
+    mov di, 0x1000              ; [es:di] = 0:1000      = 0x1000
+    mov si, 0x1010              ; [ds:si] = 0xffff:1010 = 0x101000
+
+    mov al, byte [es:di]        ; Move byte at [es:di] to al.
+    push ax                     ; Push ax to the stack.
+    mov al, byte [ds:si]        ; Move byte at [ds:si] to al.
+    push ax                     ; Push ax to the stack.
+
+    mov byte [es:di], 0x00      ; Move 0 to [es:di].
+    mov byte [ds:si], 0xff      ; Move 0xff to [ds:si].
+    cmp byte [es:di], 0xff      ; Compare [es:di] with 0xff, if A20 is not enabled,
+                                ; [es:di] would be 0 here.
+
+    pop ax
+    mov byte [ds:si], al        ; Restore the previous value at [ds:si].
+    pop ax
+    mov byte [es:di], al        ; Restore the previous value at [es:di].
+
+    pop si
+    pop di
+    pop es
+    pop ds
+    mov ax, 0                   ; Set return code to 0.
+    je check_a20_exit           ; Jump to exit if [es:di] == 0xff, meaning wrap around.
+    mov ax, 1                   ; Set return code to 1, meaning A20 is enabled.
+check_a20_exit:
+    popf
+    ret
+
+; --------------------------------------------------------------------------------
 ; Detect RAM using INT 0x15, EAX = 0xe820
 ; --------------------------------------------------------------------------------
+; See https://wiki.osdev.org/Detecting_Memory_(x86) for more details.
+;
 ; This function is available on all PCs built since 2002, and on most existing PCs
 ; before then. It is the only BIOS function that can detect memory areas above 4G.
 ; This functions returns an unsorted list that may contain unused entries and may
@@ -227,44 +289,48 @@ disk_loop:
 ; --------------------------------------------------------------------------------
 ; Print hex
 ; --------------------------------------------------------------------------------
-; receiving the data in 'dx'
+; Receiving the data in 'dx'
 ; For the examples we'll assume that we're called with dx=0x1234
 print_hex:
     pusha
-    mov cx, 0 ; our index variable
+    mov cx, 0                   ; Our index variable
+
 ; Strategy: get the last char of 'dx', then convert to ASCII
 ; Numeric ASCII values: '0' (ASCII 0x30) to '9' (0x39), so just add 0x30 to byte N.
 ; For alphabetic characters A-F: 'A' (ASCII 0x41) to 'F' (0x46) we'll add 0x40
 ; Then, move the ASCII byte to the correct position on the resulting string
 hex_loop:
-    cmp cx, 4 ; loop 4 times
+    cmp cx, 4                   ; Loop 4 times
     je end
-    ; 1. convert last char of 'dx' to ascii
-    mov ax, dx ; we will use 'ax' as our working register
-    and ax, 0x000f ; 0x1234 -> 0x0004 by masking first three to zeros
-    add al, 0x30 ; add 0x30 to N to convert it to ASCII "N"
-    cmp al, 0x39 ; if > 9, add extra 8 to represent 'A' to 'F'
+
+; 1. Convert last char of 'dx' to ascii
+    mov ax, dx                  ; We will use 'ax' as our working register
+    and ax, 0x000f              ; 0x1234 -> 0x0004 by masking first three to zeros
+    add al, 0x30                ; Add 0x30 to N to convert it to ASCII "N"
+    cmp al, 0x39                ; If > 9, add extra 8 to represent 'A' to 'F'
     jle step2
-    add al, 7 ; 'A' is ASCII 65 instead of 58, so 65-58=7
+    add al, 7                   ; 'A' is ASCII 65 instead of 58, so 65-58=7
+
+; 2. Get the correct position of the string to place our ASCII char
+; bx <- base address + string length - index of char
 step2:
-    ; 2. get the correct position of the string to place our ASCII char
-    ; bx <- base address + string length - index of char
-    mov bx, HEX_OUT + 5 ; base + length
-    sub bx, cx  ; our index variable
-    mov [bx], al ; copy the ASCII char on 'al' to the position pointed by 'bx'
-    ror dx, 4 ; 0x1234 -> 0x4123 -> 0x3412 -> 0x2341 -> 0x1234
+    mov bx, HEX_OUT + 5         ; Base + length
+    sub bx, cx                  ; Our index variable
+    mov [bx], al                ; Copy the ASCII char on 'al' to the position pointed by 'bx'
+    ror dx, 4                   ; 0x1234 -> 0x4123 -> 0x3412 -> 0x2341 -> 0x1234
     ; increment index and loop
     add cx, 1
     jmp hex_loop
+
+; Prepare the parameter and call the function
+; Remember that print receives parameters in 'bx'
 end:
-    ; prepare the parameter and call the function
-    ; remember that print receives parameters in 'bx'
     mov bx, HEX_OUT
     call print
     popa
     ret
 HEX_OUT:
-    db '0x0000',0 ; reserve memory for our new string
+    db '0x0000',0               ; Reserve memory for our new string
 
 ; --------------------------------------------------------------------------------
 ; GDT
@@ -353,6 +419,7 @@ N_KERNEL_SECTORS dw 0
 MSG_PROT_MODE db "Landed in 32-bit Protected Mode", 0
 DISK_ERROR db "Disk read error", 0
 SECTORS_ERROR db "Incorrect number of sectors read", 0
+A20_NOT_ACTIVATED db "A20 line is not activated", 0
 
 ; padding
 times (512 * 2) - ($-$$) db 0
