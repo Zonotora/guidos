@@ -8,14 +8,20 @@
 #ifdef DEBUG
 #define TRACE(group, id, msg, ...)                                                                                     \
   ({                                                                                                                   \
-    char varargs_buf[512];                                                                                             \
-    char printf_buf[1024];                                                                                             \
-    tkprintf(varargs_buf, msg, __VA_ARGS__);                                                                           \
-    tkprintf(printf_buf, "%s:%d %s.%d %s\n", __FILE__, __LINE__, group, id, varargs_buf);                              \
-    serial_write(printf_buf);                                                                                          \
+    serial_printf("%s:%d %s.%d ", __FILE__, __LINE__, group, id);                                                      \
+    serial_printf(msg, __VA_ARGS__);                                                                                   \
+    serial_printf("\n");                                                                                               \
+  })
+
+#define TRACE_STRUCT(group, id, s)                                                                                     \
+  ({                                                                                                                   \
+    serial_printf("%s:%d %s.%d ", __FILE__, __LINE__, group, id);                                                      \
+    __builtin_dump_struct(s, &serial_printf);                                                                          \
+    serial_printf("\n");                                                                                               \
   })
 #else
 #define TRACE(group, id, msg, ...)
+#define TRACE_STRUCT(group, id, s)
 #endif
 
 #endif

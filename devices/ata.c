@@ -111,14 +111,14 @@ bool wait_while_busy(const ata_device *device) {
       // uint8_t lba_mid = inb(PORT_LBA_MID(device->channel));
       // uint8_t lba_hi = inb(PORT_LBA_HI(device->channel));
       // if (lba_mid > 0 || lba_hi > 0) {
-      //   kprint("not an ata device\n");
+      //   kprintf("not an ata device\n");
       //   return false;
       // }
 
       status = inb(PORT_ALTERNATIVE_STATUS(device->channel));
       if (status & STATUS_ERR) {
         // Failed to read disk.
-        kprint("failed to read disk\n");
+        kprintf("failed to read disk\n");
         return false;
       }
 
@@ -159,7 +159,7 @@ static void read(void *device, uint32_t sector_index, void *buffer) {
   sector_select((ata_device *)device, sector_index);
   outb(PORT_COMMAND(((ata_device *)device)->channel), CMD_READ_SECTORS);
   if (!wait_while_busy((ata_device *)device)) {
-    kprint("failed to read disk\n");
+    kprintf("failed to read disk\n");
     return;
   }
   sector_in((ata_device *)device, buffer);
@@ -169,7 +169,7 @@ static void write(void *device, uint32_t sector_index, void *buffer) {
   sector_select((ata_device *)device, sector_index);
   outb(PORT_COMMAND(((ata_device *)device)->channel), CMD_WRITE_SECTORS);
   if (!wait_while_busy((ata_device *)device)) {
-    kprint("failed to write disk\n");
+    kprintf("failed to write disk\n");
     return;
   }
   // TOOD: Need delay here (between every write, a.k.a, don't use rep outsl?)
@@ -262,7 +262,7 @@ void ata_identify_device(ata_device *device) {
   // If the status is 0, the drive does not exist.
   if (status == 0) {
     // Does not exist
-    kprint("drive does not exist\n");
+    kprintf("drive does not exist\n");
     return;
   }
 
@@ -271,9 +271,9 @@ void ata_identify_device(ata_device *device) {
     return;
   }
 
-  kprint("reading from ");
-  kprint(device->name);
-  kprint("\n");
+  kprintf("reading from ");
+  kprintf(device->name);
+  kprintf("\n");
   // Data is ready to be sent. Read 256 16-bit values from the data port
   // and store that information.
   sector_in(device, sector);
@@ -320,7 +320,7 @@ void ata_init() {
     for (size_t di = 0; di < N_DEVICES_PER_CHANNEL; di++) {
       ata_device *device = &channel->devices[di];
 
-      snprintf(device->name, sizeof(device->name), "hd%c", 'a' + ci * 2 + (1 - di));
+      ksnprintf(device->name, sizeof(device->name), "hd%c", 'a' + ci * 2 + (1 - di));
       device->channel = channel;
       device->id = di;
     }

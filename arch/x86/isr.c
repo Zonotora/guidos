@@ -113,21 +113,21 @@ char *exception_messages[] = {"Division By Zero",
                               "Reserved"};
 
 void isr_handler(registers_t r) {
-  kprint("Received interrupt exception: ");
+  kprintf("Received interrupt exception: ");
   char s[3];
   int_to_ascii(r.int_no, s);
-  kprint(s);
-  kprint("\n");
-  kprint(exception_messages[r.int_no]);
-  kprint("\n");
+  kprintf(s);
+  kprintf("\n");
+  kprintf(exception_messages[r.int_no]);
+  kprintf("\n");
 }
 
 void register_interrupt_handler(unsigned char n, isr_t handler) {
-  kprint("Registered interrupt handler: ");
+  kprintf("Registered interrupt handler: ");
   char buf[32];
   int_to_ascii(n, buf);
-  kprint(buf);
-  kprint("\n");
+  kprintf(buf);
+  kprintf("\n");
   interrupt_handlers[n] = handler;
 }
 

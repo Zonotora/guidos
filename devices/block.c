@@ -13,7 +13,7 @@ block_t *block_register(const void *device, const char *name, const uint32_t sta
                         block_read_t read, block_write_t write) {
 
   if (blocks.length >= 10) {
-    kprint("too many block devices");
+    kprintf("too many block devices");
     return 0;
   }
 

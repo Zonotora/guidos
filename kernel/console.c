@@ -8,23 +8,23 @@
 char cmd[BUFFER_LEN];
 
 void backspace() {
-  int offset = get_cursor() - 1;
+  int offset = get_cursor() - 2;
   if (offset < 0) {
     offset = 0;
   }
   unsigned char row = offset / MAX_COLS;
   unsigned char col = offset % MAX_COLS;
-  kprint_at(" ", row, col);
   set_cursor(row, col);
+  kprintf(" ");
 }
 
 static void parse_cmd() {
   if (strcmp(cmd, "")) {
     // do nothing
   } else if (strcmp(cmd, "HELLO")) {
-    kprint("WORLD\n");
+    kprintf("WORLD\n");
   } else {
-    kprint("Command not found\n");
+    kprintf("Command not found\n");
   }
 }
 
@@ -32,13 +32,13 @@ void prompt(unsigned char scancode, char ascii) {
   if (scancode == BACKSPACE) {
     backspace();
   } else if (scancode == ENTER) {
-    kprint("\n");
+    kprintf("\n");
     parse_cmd();
     memory_set((unsigned char *)cmd, 0, BUFFER_LEN);
-    kprint("> ");
+    kprintf("> ");
   } else {
     char buf[2] = {ascii, 0};
-    kprint(buf);
+    kprintf(buf);
     strcat(cmd, buf, BUFFER_LEN);
   }
 }

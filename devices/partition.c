@@ -135,7 +135,7 @@ void read_partition_table(block_t *block) {
     }
 
     char name[16];
-    snprintf(name, 16, "%s%d", block->name, i);
+    ksnprintf(name, 16, "%s%d", block->name, i);
     block_t *block_partition = block_register(block->device, name, p->sector, p->size, block->read, block->write);
     block_read(block_partition, 0, read_buffer);
 

@@ -1,4 +1,5 @@
 #include "arch/x86/ports.h"
+#include "libc/printf.h"
 
 // COM1  0x3F8
 // COM2  0x2F8
@@ -174,15 +175,16 @@ char serial_read_byte() {
 
 int is_transmit_empty() { return inb(PORT_READ_LINE_STATUS(COM1)) & LINE_STATUS_THRE; }
 
-void serial_write_byte(char c) {
+void serial_putchar(char c) {
   while (is_transmit_empty() == 0)
     ;
 
   outb(PORT_READ_WRITE(COM1), c);
 }
 
-void serial_write(char *msg) {
-  while (*msg) {
-    serial_write_byte(*msg++);
-  }
+void serial_printf(const char *format, ...) {
+  va_list args;
+  va_start(args, format);
+  vprintf(serial_putchar, format, args);
+  va_end(args);
 }
